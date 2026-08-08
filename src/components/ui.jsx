@@ -150,3 +150,45 @@ export function formatRelativeDate(dateStr) {
 export function formatDate(dateStr) {
   return parseLocalDate(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
+
+export function logMetaItems(app) {
+  const items = []
+  if (app.cutHeight) items.push({ icon: 'target', text: `Cut height: ${app.cutHeight}` })
+  if (app.productName) items.push({ icon: 'flask', text: app.productName, sub: app.rate || null })
+  else if (app.rate) items.push({ icon: 'flask', text: app.rate })
+  if (app.notes) items.push({ icon: 'note', text: app.notes })
+  return items
+}
+
+export function LogCard({ to, icon, iconColor, title, subtitle, date, metaItems = [] }) {
+  return (
+    <Link to={to} className="link-row">
+      <div className="log-card">
+        <div className="log-card__header">
+          <IconBadge icon={icon} color={iconColor} />
+          <div className="list-row__body">
+            <div className="list-row__title">{title}</div>
+            {subtitle && <div className="list-row__subtitle">{subtitle}</div>}
+          </div>
+          <div className="log-card__date">
+            <div className="log-card__date-abs">{formatDate(date)}</div>
+            <div className="log-card__date-rel">{formatRelativeDate(date)}</div>
+          </div>
+        </div>
+        {metaItems.length > 0 && (
+          <div className="log-card__meta">
+            {metaItems.map((m, i) => (
+              <div className="log-card__meta-row" key={i}>
+                <Icon name={m.icon} size={15} className="log-card__meta-icon" />
+                <div className="log-card__meta-text">
+                  {m.text}
+                  {m.sub && <div className="log-card__meta-sub">{m.sub}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Link>
+  )
+}

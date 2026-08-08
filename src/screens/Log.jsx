@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
-import { Page, PageHeader, Card, IconBadge, PillRow, EmptyState, formatRelativeDate } from '../components/ui'
+import { Page, PageHeader, LogCard, logMetaItems, PillRow, EmptyState } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORY_ICON, LOG_FILTERS, ALL_ZONES_ID, ALL_ZONES_LABEL, filterGroupForCategory, appliesToZone } from '../lib/constants'
 import { groupByMonth } from '../lib/dateGroups'
@@ -64,26 +64,23 @@ export default function Log() {
         groups.map((group) => (
           <div key={group.key}>
             <div className="month-label">{group.label}</div>
-            <Card>
+            <div className="log-card-list">
               {group.items.map((app) => {
                 const meta = CATEGORY_ICON[app.category] || CATEGORY_ICON.Other
                 return (
-                  <Link to={`/log/${app.id}`} className="link-row" key={app.id}>
-                    <div className="list-row">
-                      <IconBadge icon={meta.icon} color={meta.color} />
-                      <div className="list-row__body">
-                        <div className="list-row__title">{app.category}</div>
-                        <div className="list-row__subtitle">
-                          {zoneLabel(app.zoneId)}
-                          {app.productName ? ` · ${app.productName}` : ''}
-                        </div>
-                      </div>
-                      <div className="list-row__meta">{formatRelativeDate(app.date)}</div>
-                    </div>
-                  </Link>
+                  <LogCard
+                    key={app.id}
+                    to={`/log/${app.id}`}
+                    icon={meta.icon}
+                    iconColor={meta.color}
+                    title={app.category}
+                    subtitle={zoneLabel(app.zoneId)}
+                    date={app.date}
+                    metaItems={logMetaItems(app)}
+                  />
                 )
               })}
-            </Card>
+            </div>
           </div>
         ))
       )}

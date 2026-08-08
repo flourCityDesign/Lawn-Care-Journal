@@ -348,3 +348,73 @@
   font-weight: 800;
   color: var(--text);
 }
+
+.log-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.log-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.log-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.log-card__date {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.log-card__date-abs {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.log-card__date-rel {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.log-card__meta {
+  border-top: 1px solid var(--card-border);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-card__meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.log-card__meta-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-faint);
+}
+
+.log-card__meta-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.log-card__meta-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}

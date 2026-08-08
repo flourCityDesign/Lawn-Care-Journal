@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, IconBadge, ProgressBar, EmptyState, formatRelativeDate, formatDate } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORY_ICON } from '../lib/constants'
+import { CATEGORY_ICON, ALL_ZONES_ID, appliesToZone } from '../lib/constants'
 import { bentgrassZoneHistory } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
 
@@ -21,7 +21,7 @@ export default function ZoneDetail() {
   }
 
   const history = applications
-    .filter((a) => a.zoneId === zone.id)
+    .filter((a) => appliesToZone(a, zone.id))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const year = new Date().getFullYear()
@@ -141,7 +141,10 @@ export default function ZoneDetail() {
                   <IconBadge icon={meta.icon} color={meta.color} />
                   <div className="list-row__body">
                     <div className="list-row__title">{app.category}</div>
-                    <div className="list-row__subtitle">{app.productName || app.notes || '—'}</div>
+                    <div className="list-row__subtitle">
+                      {app.zoneId === ALL_ZONES_ID ? 'Whole Lawn · ' : ''}
+                      {app.productName || app.notes || '—'}
+                    </div>
                   </div>
                   <div className="list-row__meta">{formatRelativeDate(app.date)}</div>
                 </div>

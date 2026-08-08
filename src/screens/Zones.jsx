@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, EmptyState, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
+import { appliesToZone } from '../lib/constants'
 
 export default function Zones() {
   const { zones, applications } = useData()
@@ -32,7 +33,7 @@ export default function Zones() {
         <Card>
           {zonesSorted.map((zone) => {
             const zoneApps = applications
-              .filter((a) => a.zoneId === zone.id)
+              .filter((a) => appliesToZone(a, zone.id))
               .sort((a, b) => new Date(b.date) - new Date(a.date))
             const last = zoneApps[0]
             return (

@@ -1,4 +1,4 @@
-import { BENTGRASS_CATEGORY } from './constants'
+import { BENTGRASS_CATEGORY, appliesToZone } from './constants'
 
 export function bentgrassAppsThisSeason(applications, year = new Date().getFullYear()) {
   return applications
@@ -28,5 +28,5 @@ export function bentgrassStatus(applications, cap, retreatDays, year = new Date(
 }
 
 export function bentgrassZoneHistory(applications, zoneId, year = new Date().getFullYear()) {
-  return bentgrassAppsThisSeason(applications, year).filter((a) => a.zoneId === zoneId)
+  return bentgrassAppsThisSeason(applications, year).filter((a) => appliesToZone(a, zoneId))
 }

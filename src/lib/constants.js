@@ -26,6 +26,12 @@ export const BENTGRASS_CATEGORY = 'Bentgrass treatment'
 export const ALL_ZONES_ID = 'all'
 export const ALL_ZONES_LABEL = 'Whole Lawn (All Zones)'
 
+// A Whole Lawn application covers every zone, so it should show up
+// whenever viewing a specific zone's history/activity, not just "All".
+export function appliesToZone(app, zoneId) {
+  return app.zoneId === zoneId || app.zoneId === ALL_ZONES_ID
+}
+
 export const CATEGORY_ICON = {
   Mow: { icon: 'scissors', color: '#7FFF3D' },
   Fertilizer: { icon: 'flask', color: '#D4E157' },

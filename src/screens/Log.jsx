@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, PillRow, EmptyState, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORY_ICON, LOG_FILTERS, ALL_ZONES_ID, ALL_ZONES_LABEL, filterGroupForCategory } from '../lib/constants'
+import { CATEGORY_ICON, LOG_FILTERS, ALL_ZONES_ID, ALL_ZONES_LABEL, filterGroupForCategory, appliesToZone } from '../lib/constants'
 
 export default function Log() {
   const { applications, zones } = useData()
@@ -21,7 +21,7 @@ export default function Log() {
       .filter((a) => {
         if (zoneFilter === 'All') return true
         const zone = zones.find((z) => z.name === zoneFilter)
-        return zone && a.zoneId === zone.id
+        return zone && appliesToZone(a, zone.id)
       })
       .sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [applications, filter, zoneFilter, zones])

@@ -4,7 +4,7 @@ import { useData } from '../lib/DataContext'
 import { Page, Card, CardBody, IconBadge, SectionLabel, ProgressBar, formatRelativeDate, statusTone } from '../components/ui'
 import Icon from '../components/Icon'
 import NBudgetCard from '../components/NBudgetCard'
-import { CATEGORY_ICON, ALL_ZONES_ID, ALL_ZONES_LABEL } from '../lib/constants'
+import { CATEGORY_ICON, ALL_ZONES_ID, ALL_ZONES_LABEL, appliesToZone } from '../lib/constants'
 import { computeMowScore } from '../lib/mow'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
@@ -170,7 +170,7 @@ export default function Home() {
         <div className="yard-scroll">
           {zones.map((zone) => {
             const last = applications
-              .filter((a) => a.zoneId === zone.id)
+              .filter((a) => appliesToZone(a, zone.id))
               .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
             return (
               <Link to={`/yards/${zone.id}`} key={zone.id} className="yard-card">

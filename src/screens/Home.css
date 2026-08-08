@@ -73,6 +73,10 @@
   gap: 12px;
 }
 
+.stat-tile-row > .card {
+  margin-top: 0;
+}
+
 .yard-scroll {
   display: flex;
   gap: 12px;

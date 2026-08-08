@@ -196,8 +196,10 @@
 .field label {
   display: block;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin-bottom: 6px;
 }
 
@@ -274,4 +276,75 @@
   text-decoration: none;
   color: inherit;
   display: block;
+}
+
+.date-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-alt);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.date-field__icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.date-field__text {
+  flex: 1;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.date-field__chevron {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.date-field__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card-alt);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+
+.stepper__btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stepper__btn:disabled {
+  opacity: 0.4;
+}
+
+.stepper__value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
 }

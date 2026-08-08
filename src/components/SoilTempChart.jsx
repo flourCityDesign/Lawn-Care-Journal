@@ -1,3 +1,5 @@
+import { parseLocalDate } from '../lib/date'
+
 const WIDTH = 328
 const HEIGHT = 140
 const PAD_L = 30
@@ -47,7 +49,7 @@ export default function SoilTempChart({ data, threshold }) {
       {data.map((d, i) =>
         i % labelEvery === 0 ? (
           <text key={d.date} x={x(i)} y={HEIGHT - 4} fill="var(--text-faint)" fontSize="9" textAnchor="middle">
-            {new Date(d.date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
+            {parseLocalDate(d.date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
           </text>
         ) : null
       )}

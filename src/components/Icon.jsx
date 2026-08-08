@@ -94,6 +94,8 @@ const PATHS = {
   ),
   'chevron-right': <path d="M9 5l7 7-7 7" />,
   'chevron-left': <path d="M15 5l-7 7 7 7" />,
+  'chevron-down': <path d="M5 9l7 7 7-7" />,
+  minus: <line x1="5" y1="12" x2="19" y2="12" />,
   trash: (
     <>
       <path d="M4 7h16" />

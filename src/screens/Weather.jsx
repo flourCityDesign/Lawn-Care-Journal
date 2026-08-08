@@ -6,6 +6,7 @@ import Icon from '../components/Icon'
 import SoilTempChart from '../components/SoilTempChart'
 import { fetchWeather, weatherCodeLabel, SOIL_TEMP_DEPTH_NOTE, GERMINATION_THRESHOLD_F } from '../lib/weather'
 import { computeMowScore } from '../lib/mow'
+import { parseLocalDate } from '../lib/date'
 
 function timeAgo(iso) {
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
@@ -207,7 +208,7 @@ export default function Weather() {
             {weatherCache.daily.map((d) => (
               <div className="list-row" key={d.date}>
                 <div style={{ width: 44, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-                  {new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' })}
+                  {parseLocalDate(d.date).toLocaleDateString(undefined, { weekday: 'short' })}
                 </div>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-dim)', fontSize: 12 }}>
                   <Icon name="droplet" size={13} /> {Math.round(d.precipChance)}%

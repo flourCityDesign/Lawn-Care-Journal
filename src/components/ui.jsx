@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon'
+import { parseLocalDate } from '../lib/date'
 import './ui.css'
 
 export function Page({ children }) {
@@ -131,9 +132,9 @@ export function ProgressBar({ pct, color = 'var(--accent)' }) {
 }
 
 export function formatRelativeDate(dateStr) {
-  const date = new Date(dateStr)
+  const date = parseLocalDate(dateStr)
   const now = new Date()
-  const diffMs = now.setHours(0, 0, 0, 0) - new Date(dateStr).setHours(0, 0, 0, 0)
+  const diffMs = now.setHours(0, 0, 0, 0) - date.setHours(0, 0, 0, 0)
   const days = Math.round(diffMs / 86400000)
   if (days === 0) return 'Today'
   if (days === 1) return 'Yesterday'
@@ -147,5 +148,5 @@ export function formatRelativeDate(dateStr) {
 }
 
 export function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return parseLocalDate(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }

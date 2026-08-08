@@ -1,8 +1,9 @@
 import { BENTGRASS_CATEGORY, appliesToZone } from './constants'
+import { parseLocalDate } from './date'
 
 export function bentgrassAppsThisSeason(applications, year = new Date().getFullYear()) {
   return applications
-    .filter((a) => a.category === BENTGRASS_CATEGORY && new Date(a.date).getFullYear() === year)
+    .filter((a) => a.category === BENTGRASS_CATEGORY && parseLocalDate(a.date).getFullYear() === year)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 }
 
@@ -12,7 +13,7 @@ export function bentgrassStatus(applications, cap, retreatDays, year = new Date(
   const lastApp = apps[0] || null
   let safeAfter = null
   if (lastApp) {
-    const d = new Date(lastApp.date)
+    const d = parseLocalDate(lastApp.date)
     d.setDate(d.getDate() + Number(retreatDays || 21))
     safeAfter = d
   }

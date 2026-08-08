@@ -2,6 +2,7 @@
 // applications this year, expressed per 1,000 sqft of total lawn area.
 
 import { ALL_ZONES_ID, ALL_ZONES_LABEL } from './constants'
+import { parseLocalDate } from './date'
 
 export function totalLawnSqft(zones) {
   return zones.reduce((sum, z) => sum + (Number(z.sqft) || 0), 0)
@@ -17,7 +18,7 @@ export function actualNLbs(app) {
 export function nitrogenYtd(applications, zones, year = new Date().getFullYear()) {
   const sqft = totalLawnSqft(zones)
   const ytdApps = applications.filter(
-    (a) => a.category === 'Fertilizer' && new Date(a.date).getFullYear() === year
+    (a) => a.category === 'Fertilizer' && parseLocalDate(a.date).getFullYear() === year
   )
   const totalLbsN = ytdApps.reduce((sum, a) => sum + actualNLbs(a), 0)
   const per1000 = sqft > 0 ? totalLbsN / (sqft / 1000) : 0
@@ -29,7 +30,7 @@ export function nitrogenYtd(applications, zones, year = new Date().getFullYear()
 // each zone's own rate rather than being diluted across total sqft.
 export function nitrogenYtdByZone(applications, zones, year = new Date().getFullYear()) {
   const totalSqft = totalLawnSqft(zones)
-  const yearApps = applications.filter((a) => a.category === 'Fertilizer' && new Date(a.date).getFullYear() === year)
+  const yearApps = applications.filter((a) => a.category === 'Fertilizer' && parseLocalDate(a.date).getFullYear() === year)
 
   const wholeLawnLbsN = yearApps.filter((a) => a.zoneId === ALL_ZONES_ID).reduce((sum, a) => sum + actualNLbs(a), 0)
   const wholeLawnRate = totalSqft > 0 ? wholeLawnLbsN / (totalSqft / 1000) : 0

@@ -6,6 +6,7 @@ import { CATEGORY_ICON, ALL_ZONES_ID, appliesToZone } from '../lib/constants'
 import { bentgrassZoneHistory } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
 import { groupByMonth } from '../lib/dateGroups'
+import { parseLocalDate } from '../lib/date'
 
 export default function ZoneDetail() {
   const { id } = useParams()
@@ -37,7 +38,7 @@ export default function ZoneDetail() {
   const lastBentgrass = bentgrassHistory[0]
   let safeAfter = null
   if (lastBentgrass) {
-    const d = new Date(lastBentgrass.date)
+    const d = parseLocalDate(lastBentgrass.date)
     d.setDate(d.getDate() + Number(settings.bentgrassRetreatDays || 21))
     safeAfter = d
   }

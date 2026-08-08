@@ -1,11 +1,25 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
-import { Page, PageHeader, Card, CardBody, Button } from '../components/ui'
+import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
 import { CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
+import { parseLocalDate } from '../lib/date'
 import Icon from '../components/Icon'
+
+const CUT_HEIGHT_STEP = 0.25
+const CUT_HEIGHT_MIN = 0.25
+const DEFAULT_CUT_HEIGHT = 3
+
+function parseCutHeight(str) {
+  const n = parseFloat(str)
+  return Number.isFinite(n) ? n : null
+}
+
+function formatCutHeight(n) {
+  return `${Number(n.toFixed(2))}"`
+}
 
 export default function LogEntryForm() {
   const { id } = useParams()
@@ -18,11 +32,16 @@ export default function LogEntryForm() {
   const isEdit = Boolean(existing)
   const prefill = location.state || {}
 
+  const lastMow = [...applications]
+    .filter((a) => a.category === 'Mow' && a.id !== existing?.id)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+  const initialCutHeight = parseCutHeight(existing?.cutHeight) ?? parseCutHeight(lastMow?.cutHeight) ?? DEFAULT_CUT_HEIGHT
+
   const [date, setDate] = useState(existing?.date ?? new Date().toISOString().slice(0, 10))
   const [category, setCategory] = useState(existing?.category ?? prefill.category ?? 'Mow')
   const [productName, setProductName] = useState(existing?.productName ?? prefill.productName ?? '')
   const [rate, setRate] = useState(existing?.rate ?? prefill.rate ?? '')
-  const [cutHeight, setCutHeight] = useState(existing?.cutHeight ?? '')
+  const [cutHeight, setCutHeight] = useState(initialCutHeight)
   const [nPercent, setNPercent] = useState(existing?.nPercent ?? '')
   const [amountLbs, setAmountLbs] = useState(existing?.amountLbs ?? '')
   const [zoneId, setZoneId] = useState(existing?.zoneId ?? ALL_ZONES_ID)
@@ -40,7 +59,7 @@ export default function LogEntryForm() {
 
   const bStatus = useMemo(() => {
     if (!isBentgrass) return null
-    const excludeCurrentYear = new Date(date).getFullYear()
+    const excludeCurrentYear = parseLocalDate(date).getFullYear()
     const others = applications.filter((a) => a.id !== existing?.id)
     return bentgrassStatus(others, settings.bentgrassSeasonCap, settings.bentgrassRetreatDays, excludeCurrentYear)
   }, [isBentgrass, applications, existing, settings, date])
@@ -82,7 +101,7 @@ export default function LogEntryForm() {
       category,
       productName: isMow ? '' : productName.trim(),
       rate: isMow ? '' : rate.trim(),
-      cutHeight: isMow ? cutHeight.trim() : '',
+      cutHeight: isMow ? formatCutHeight(cutHeight) : '',
       nPercent: isFertilizer && nPercent !== '' ? Number(nPercent) : null,
       amountLbs: isFertilizer && amountLbs !== '' ? Number(amountLbs) : null,
       zoneId,
@@ -111,7 +130,18 @@ export default function LogEntryForm() {
           <form onSubmit={handleSubmit}>
             <div className="field">
               <label htmlFor="entry-date">Date</label>
-              <input id="entry-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <div className="date-field">
+                <Icon name="calendar" size={18} className="date-field__icon" />
+                <span className="date-field__text">{formatDate(date)}</span>
+                <Icon name="chevron-down" size={16} className="date-field__chevron" />
+                <input
+                  id="entry-date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="date-field__input"
+                />
+              </div>
             </div>
             <div className="field">
               <label htmlFor="entry-category">Category</label>
@@ -127,13 +157,26 @@ export default function LogEntryForm() {
             {isMow ? (
               <div className="field">
                 <label htmlFor="cut-height">Cut Height</label>
-                <input
-                  id="cut-height"
-                  type="text"
-                  placeholder='e.g. 4"'
-                  value={cutHeight}
-                  onChange={(e) => setCutHeight(e.target.value)}
-                />
+                <div className="stepper" id="cut-height">
+                  <button
+                    type="button"
+                    className="stepper__btn"
+                    disabled={cutHeight <= CUT_HEIGHT_MIN}
+                    onClick={() => setCutHeight((h) => Math.max(CUT_HEIGHT_MIN, +(h - CUT_HEIGHT_STEP).toFixed(2)))}
+                    aria-label="Decrease cut height"
+                  >
+                    <Icon name="minus" size={16} />
+                  </button>
+                  <div className="stepper__value">{formatCutHeight(cutHeight)}</div>
+                  <button
+                    type="button"
+                    className="stepper__btn"
+                    onClick={() => setCutHeight((h) => +(h + CUT_HEIGHT_STEP).toFixed(2))}
+                    aria-label="Increase cut height"
+                  >
+                    <Icon name="plus" size={16} />
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -220,7 +263,7 @@ export default function LogEntryForm() {
                     : `${bStatus.count} of ${bStatus.cap} max bentgrass applications used this season.`}
                   {bStatus.safeAfter && (
                     <div style={{ marginTop: 4 }}>
-                      Last treated {new Date(bStatus.lastApp.date).toLocaleDateString()} — safe to re-treat on or after{' '}
+                      Last treated {parseLocalDate(bStatus.lastApp.date).toLocaleDateString()} — safe to re-treat on or after{' '}
                       {bStatus.safeAfter.toLocaleDateString()}.
                     </div>
                   )}

@@ -3,6 +3,7 @@ import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORY_ICON, ALL_ZONES_ID, ALL_ZONES_LABEL } from '../lib/constants'
+import { actualNLbs, totalLawnSqft } from '../lib/nitrogen'
 
 function Row({ icon, label, children }) {
   return (
@@ -33,6 +34,11 @@ export default function LogEntryDetail() {
   const meta = CATEGORY_ICON[app.category] || CATEGORY_ICON.Other
   const zoneName = app.zoneId === ALL_ZONES_ID ? ALL_ZONES_LABEL : zones.find((z) => z.id === app.zoneId)?.name || 'Deleted zone'
   const entryPhotos = (app.photoIds || []).map((pid) => photos.find((p) => p.id === pid)).filter(Boolean)
+
+  const entryActualN = actualNLbs(app)
+  const entryAreaSqft =
+    app.zoneId === ALL_ZONES_ID ? totalLawnSqft(zones) : Number(zones.find((z) => z.id === app.zoneId)?.sqft) || 0
+  const entryNRate = entryActualN > 0 && entryAreaSqft > 0 ? entryActualN / (entryAreaSqft / 1000) : null
 
   function handleDelete() {
     if (window.confirm('Delete this log entry?')) {
@@ -100,9 +106,16 @@ export default function LogEntryDetail() {
         )}
         {app.category === 'Fertilizer' && (app.nPercent || app.amountLbs) && (
           <Row icon="leaf" label="Nitrogen">
-            {app.amountLbs ? `${app.amountLbs} lbs product` : '—'}
-            {app.nPercent ? ` @ ${app.nPercent}% N` : ''}
-            {app.amountLbs && app.nPercent ? ` (${((app.amountLbs * app.nPercent) / 100).toFixed(2)} lbs actual N)` : ''}
+            <div>
+              {app.amountLbs ? `${app.amountLbs} lbs product` : '—'}
+              {app.nPercent ? ` @ ${app.nPercent}% N` : ''}
+              {app.amountLbs && app.nPercent ? ` (${((app.amountLbs * app.nPercent) / 100).toFixed(2)} lbs actual N)` : ''}
+            </div>
+            {entryNRate != null && (
+              <div style={{ fontWeight: 500, color: 'var(--text-dim)', fontSize: 13, marginTop: 2 }}>
+                {entryNRate.toFixed(2)} lbs N / 1,000 sqft
+              </div>
+            )}
           </Row>
         )}
         {app.notes && (

@@ -39,6 +39,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 body {
@@ -86,6 +87,16 @@ textarea {
   padding: 12px 14px;
   font-size: 16px;
   outline: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* iOS Safari renders type=date with a locale-length-dependent intrinsic
+   width that can exceed the box even with width:100%; -webkit-appearance:
+   none stops it fighting the CSS width. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 input:focus,

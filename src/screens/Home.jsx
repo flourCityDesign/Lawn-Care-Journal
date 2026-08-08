@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, Card, CardBody, IconBadge, SectionLabel, ProgressBar, formatRelativeDate, statusTone } from '../components/ui'
 import Icon from '../components/Icon'
+import NBudgetCard from '../components/NBudgetCard'
 import { CATEGORY_ICON, ALL_ZONES_ID, ALL_ZONES_LABEL } from '../lib/constants'
 import { computeMowScore } from '../lib/mow'
 import { bentgrassStatus } from '../lib/bentgrass'
-import { nitrogenYtd, nitrogenStatus } from '../lib/nitrogen'
+import { nitrogenYtdByZone } from '../lib/nitrogen'
 import './Home.css'
 
 function greeting() {
@@ -35,8 +36,7 @@ export default function Home() {
   const planPct = yearTasks.length ? Math.round((doneCount / yearTasks.length) * 100) : 0
 
   const bStatus = bentgrassStatus(applications, settings.bentgrassSeasonCap, settings.bentgrassRetreatDays, year)
-  const nStatus = nitrogenYtd(applications, zones, year)
-  const nTone = nitrogenStatus(nStatus.per1000, settings.nitrogenAnnualCap)
+  const nBudgetPages = nitrogenYtdByZone(applications, zones, year)
 
   const mow = weatherCache
     ? computeMowScore({
@@ -148,21 +148,7 @@ export default function Home() {
             </div>
           </CardBody>
         </Card>
-        <Card>
-          <CardBody>
-            <div style={{ color: 'var(--text-dim)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>N Budget (lbs/1k)</div>
-            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, color: statusTone(nTone === 'ok' ? 'good' : nTone === 'caution' ? 'caution' : 'bad').color }}>
-              {nStatus.per1000.toFixed(1)}{' '}
-              <span style={{ fontSize: 15, color: 'var(--text-dim)', fontWeight: 600 }}>/ {settings.nitrogenAnnualCap}</span>
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <ProgressBar
-                pct={(nStatus.per1000 / settings.nitrogenAnnualCap) * 100}
-                color={statusTone(nTone === 'ok' ? 'good' : nTone === 'caution' ? 'caution' : 'bad').color}
-              />
-            </div>
-          </CardBody>
-        </Card>
+        <NBudgetCard pages={nBudgetPages} cap={settings.nitrogenAnnualCap} />
       </div>
 
       <SectionLabel icon="layers" action="See all" actionTo="/yards">

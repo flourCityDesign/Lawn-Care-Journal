@@ -3,7 +3,7 @@ import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORY_ICON, zoneLabelForApp } from '../lib/constants'
-import { actualNLbs, appCoverageSqft } from '../lib/nitrogen'
+import { appNRatePer1000 } from '../lib/nitrogen'
 
 function Row({ icon, label, children }) {
   return (
@@ -35,9 +35,7 @@ export default function LogEntryDetail() {
   const zoneName = zoneLabelForApp(app, zones)
   const entryPhotos = (app.photoIds || []).map((pid) => photos.find((p) => p.id === pid)).filter(Boolean)
 
-  const entryActualN = actualNLbs(app)
-  const entryAreaSqft = appCoverageSqft(app, zones)
-  const entryNRate = entryActualN > 0 && entryAreaSqft > 0 ? entryActualN / (entryAreaSqft / 1000) : null
+  const entryNRate = app.category === 'Fertilizer' ? appNRatePer1000(app, zones) : null
 
   function handleDelete() {
     if (window.confirm('Delete this log entry?')) {
@@ -93,28 +91,48 @@ export default function LogEntryDetail() {
             {app.cutHeight}
           </Row>
         )}
-        {app.productName && (
-          <Row icon="flask" label="Product">
-            {app.productName}
-          </Row>
-        )}
-        {app.rate && (
-          <Row icon="bar-chart" label="Rate / Amount">
-            {app.rate}
-          </Row>
-        )}
-        {app.category === 'Fertilizer' && (app.nPercent || app.amountLbs) && (
-          <Row icon="leaf" label="Nitrogen">
-            <div>
-              {app.amountLbs ? `${app.amountLbs} lbs product` : '—'}
-              {app.nPercent ? ` @ ${app.nPercent}% N` : ''}
-              {app.amountLbs && app.nPercent ? ` (${((app.amountLbs * app.nPercent) / 100).toFixed(2)} lbs actual N)` : ''}
-            </div>
-            {entryNRate != null && (
-              <div style={{ fontWeight: 500, color: 'var(--text-dim)', fontSize: 13, marginTop: 2 }}>
-                {entryNRate.toFixed(2)} lbs N / 1,000 sqft
-              </div>
+        {app.products?.length > 0 ? (
+          <>
+            <Row icon="flask" label="Type">
+              {app.productType === 'liquid' ? 'Liquid' : 'Granular'}
+            </Row>
+            {app.products.map((p, i) => {
+              const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
+              const detailParts = [
+                p.rate ? `${p.rate} ${unit} / 1,000 sqft` : null,
+                p.nPercent ? `${p.nPercent}% N` : null,
+                p.spreaderSetting ? `Spreader: ${p.spreaderSetting}` : null,
+                p.ozPerGallon ? `${p.ozPerGallon} oz/gal` : null,
+              ].filter(Boolean)
+              return (
+                <Row key={i} icon="flask" label={app.products.length > 1 ? `Product ${i + 1}` : 'Product'}>
+                  <div>{p.name || '—'}</div>
+                  {detailParts.length > 0 && (
+                    <div style={{ fontWeight: 500, color: 'var(--text-dim)', fontSize: 13, marginTop: 2 }}>
+                      {detailParts.join(' · ')}
+                    </div>
+                  )}
+                </Row>
+              )
+            })}
+          </>
+        ) : (
+          <>
+            {app.productName && (
+              <Row icon="flask" label="Product">
+                {app.productName}
+              </Row>
             )}
+            {app.rate && (
+              <Row icon="bar-chart" label="Rate / Amount">
+                {app.rate}
+              </Row>
+            )}
+          </>
+        )}
+        {entryNRate != null && entryNRate > 0 && (
+          <Row icon="leaf" label="Nitrogen">
+            {entryNRate.toFixed(2)} lbs N / 1,000 sqft
           </Row>
         )}
         {app.notes && (

@@ -154,8 +154,19 @@ export function formatDate(dateStr) {
 export function logMetaItems(app) {
   const items = []
   if (app.cutHeight) items.push({ icon: 'target', text: `Cut height: ${app.cutHeight}` })
-  if (app.productName) items.push({ icon: 'flask', text: app.productName, sub: app.rate || null })
-  else if (app.rate) items.push({ icon: 'flask', text: app.rate })
+  if (app.products?.length) {
+    const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
+    app.products.forEach((p) => {
+      const parts = []
+      if (p.rate) parts.push(`${p.rate} ${unit}/1k sqft`)
+      if (p.nPercent) parts.push(`${p.nPercent}% N`)
+      items.push({ icon: 'flask', text: p.name || 'Product', sub: parts.join(' · ') || null })
+    })
+  } else if (app.productName) {
+    items.push({ icon: 'flask', text: app.productName, sub: app.rate || null })
+  } else if (app.rate) {
+    items.push({ icon: 'flask', text: app.rate })
+  }
   if (app.notes) items.push({ icon: 'note', text: app.notes })
   return items
 }

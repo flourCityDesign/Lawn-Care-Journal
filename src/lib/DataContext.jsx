@@ -66,7 +66,7 @@ export function DataProvider({ children }) {
       const names = applications
         .filter((a) => (category ? a.category === category : true))
         .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .map((a) => a.productName)
+        .flatMap((a) => (a.products?.length ? a.products.map((p) => p.name) : [a.productName]))
         .filter(Boolean)
       return Array.from(new Set(names))
     },

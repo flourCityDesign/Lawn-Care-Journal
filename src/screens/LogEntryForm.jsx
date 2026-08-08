@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
-import { CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
+import { CATEGORIES, TREATMENT_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
+import { appCoverageSqft } from '../lib/nitrogen'
 import { parseLocalDate } from '../lib/date'
 import Icon from '../components/Icon'
 
@@ -19,6 +20,10 @@ function parseCutHeight(str) {
 
 function formatCutHeight(n) {
   return `${Number(n.toFixed(2))}"`
+}
+
+function emptyProduct() {
+  return { name: '', rate: '', nPercent: '', spreaderSetting: '', ozPerGallon: '' }
 }
 
 export default function LogEntryForm() {
@@ -42,8 +47,27 @@ export default function LogEntryForm() {
   const [productName, setProductName] = useState(existing?.productName ?? prefill.productName ?? '')
   const [rate, setRate] = useState(existing?.rate ?? prefill.rate ?? '')
   const [cutHeight, setCutHeight] = useState(initialCutHeight)
-  const [nPercent, setNPercent] = useState(existing?.nPercent ?? '')
-  const [amountLbs, setAmountLbs] = useState(existing?.amountLbs ?? '')
+  const [productType, setProductType] = useState(existing?.productType ?? 'granular')
+  const [products, setProducts] = useState(() => {
+    if (existing?.products?.length) return existing.products
+    if (existing?.productName) {
+      // The old rate field was freeform text describing a total amount
+      // applied (e.g. "10 lbs"), not a lbs/1,000 sqft density like the new
+      // rate field expects - carrying it over as-is would silently zero out
+      // (or misrepresent) this entry's N contribution. Only Fertilizer
+      // entries recorded a clean numeric amountLbs we can convert from;
+      // other legacy categories just start with rate blank for re-entry.
+      const legacyRate =
+        existing.category === 'Fertilizer' && existing.amountLbs
+          ? (() => {
+              const coverageSqft = appCoverageSqft(existing, zones)
+              return coverageSqft > 0 ? String(+(Number(existing.amountLbs) / (coverageSqft / 1000)).toFixed(2)) : ''
+            })()
+          : ''
+      return [{ ...emptyProduct(), name: existing.productName, rate: legacyRate, nPercent: existing.nPercent ?? '' }]
+    }
+    return [emptyProduct()]
+  })
   const [zoneIds, setZoneIds] = useState(() => (existing ? getZoneIds(existing) : [ALL_ZONES_ID]))
   const [notes, setNotes] = useState(existing?.notes ?? prefill.notes ?? '')
   const [photoIds, setPhotoIds] = useState(existing?.photoIds ?? [])
@@ -51,6 +75,7 @@ export default function LogEntryForm() {
   const [error, setError] = useState('')
 
   const isMow = category === 'Mow'
+  const isTreatment = TREATMENT_CATEGORIES.includes(category)
   const isFertilizer = category === 'Fertilizer'
   const isBentgrass = category === BENTGRASS_CATEGORY
 
@@ -70,6 +95,18 @@ export default function LogEntryForm() {
       const withoutAll = prev.filter((z) => z !== ALL_ZONES_ID)
       return withoutAll.includes(id) ? withoutAll.filter((z) => z !== id) : [...withoutAll, id]
     })
+  }
+
+  function updateProduct(index, patch) {
+    setProducts((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)))
+  }
+
+  function addProduct() {
+    setProducts((prev) => [...prev, emptyProduct()])
+  }
+
+  function removeProduct(index) {
+    setProducts((prev) => prev.filter((_, i) => i !== index))
   }
 
   async function handlePhotoChange(e) {
@@ -112,14 +149,35 @@ export default function LogEntryForm() {
     const payload = {
       date,
       category,
-      productName: isMow ? '' : productName.trim(),
-      rate: isMow ? '' : rate.trim(),
       cutHeight: isMow ? formatCutHeight(cutHeight) : '',
-      nPercent: isFertilizer && nPercent !== '' ? Number(nPercent) : null,
-      amountLbs: isFertilizer && amountLbs !== '' ? Number(amountLbs) : null,
       zoneIds,
       notes: notes.trim(),
       photoIds,
+      ...(isTreatment
+        ? {
+            productType,
+            products: products
+              .filter((p) => p.name.trim() || p.rate)
+              .map((p) => ({
+                name: p.name.trim(),
+                rate: p.rate,
+                nPercent: isFertilizer && p.nPercent !== '' ? Number(p.nPercent) : null,
+                spreaderSetting: productType === 'granular' ? p.spreaderSetting.trim() : '',
+                ozPerGallon: productType === 'liquid' ? p.ozPerGallon.trim() : '',
+              })),
+            productName: '',
+            rate: '',
+            nPercent: null,
+            amountLbs: null,
+          }
+        : {
+            productName: !isMow ? productName.trim() : '',
+            rate: !isMow ? rate.trim() : '',
+            nPercent: null,
+            amountLbs: null,
+            products: null,
+            productType: null,
+          }),
     }
 
     let record
@@ -167,6 +225,12 @@ export default function LogEntryForm() {
               </select>
             </div>
 
+            <datalist id="product-suggestions">
+              {productSuggestions.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+
             {isMow ? (
               <div className="field">
                 <label htmlFor="cut-height">Cut Height</label>
@@ -191,6 +255,112 @@ export default function LogEntryForm() {
                   </button>
                 </div>
               </div>
+            ) : isTreatment ? (
+              <>
+                <div className="field">
+                  <label>Type</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className={'pill' + (productType === 'granular' ? ' pill--active' : '')}
+                      style={{ flex: 1 }}
+                      onClick={() => setProductType('granular')}
+                    >
+                      Granular
+                    </button>
+                    <button
+                      type="button"
+                      className={'pill' + (productType === 'liquid' ? ' pill--active' : '')}
+                      style={{ flex: 1 }}
+                      onClick={() => setProductType('liquid')}
+                    >
+                      Liquid
+                    </button>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Products</label>
+                  {products.map((p, i) => (
+                    <div className="product-card" key={i}>
+                      <div className="product-card__header">
+                        <span className="product-card__label">Product {i + 1}</span>
+                        {products.length > 1 && (
+                          <button
+                            type="button"
+                            className="product-card__remove"
+                            onClick={() => removeProduct(i)}
+                            aria-label={`Remove product ${i + 1}`}
+                          >
+                            <Icon name="x" size={16} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="icon-field">
+                        <Icon name="flask" size={16} className="icon-field__icon" />
+                        <input
+                          type="text"
+                          list="product-suggestions"
+                          placeholder="Product name"
+                          value={p.name}
+                          onChange={(e) => updateProduct(i, { name: e.target.value })}
+                        />
+                      </div>
+                      <div className="icon-field">
+                        <Icon name="bar-chart" size={16} className="icon-field__icon" />
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="Rate"
+                          value={p.rate}
+                          onChange={(e) => updateProduct(i, { rate: e.target.value })}
+                        />
+                        <span className="icon-field__suffix">{productType === 'liquid' ? 'oz / 1k sqft' : 'lbs / 1k sqft'}</span>
+                      </div>
+                      {isFertilizer && (
+                        <div className="icon-field">
+                          <Icon name="leaf" size={16} className="icon-field__icon" />
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            max="100"
+                            placeholder="N% (optional)"
+                            value={p.nPercent}
+                            onChange={(e) => updateProduct(i, { nPercent: e.target.value })}
+                          />
+                        </div>
+                      )}
+                      {productType === 'granular' ? (
+                        <div className="icon-field">
+                          <Icon name="settings" size={16} className="icon-field__icon" />
+                          <input
+                            type="text"
+                            placeholder="Spreader setting (optional)"
+                            value={p.spreaderSetting}
+                            onChange={(e) => updateProduct(i, { spreaderSetting: e.target.value })}
+                          />
+                        </div>
+                      ) : (
+                        <div className="icon-field">
+                          <Icon name="droplet" size={16} className="icon-field__icon" />
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="oz per gallon (optional)"
+                            value={p.ozPerGallon}
+                            onChange={(e) => updateProduct(i, { ozPerGallon: e.target.value })}
+                          />
+                          <span className="icon-field__suffix">oz / gal</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" className="add-product-btn" onClick={addProduct}>
+                    <Icon name="plus" size={16} /> Add Product
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 <div className="field">
@@ -203,11 +373,6 @@ export default function LogEntryForm() {
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
                   />
-                  <datalist id="product-suggestions">
-                    {productSuggestions.map((name) => (
-                      <option key={name} value={name} />
-                    ))}
-                  </datalist>
                 </div>
                 <div className="field">
                   <label htmlFor="rate">Rate / Amount Applied</label>
@@ -220,36 +385,6 @@ export default function LogEntryForm() {
                   />
                 </div>
               </>
-            )}
-
-            {isFertilizer && (
-              <div className="field-row">
-                <div className="field">
-                  <label htmlFor="n-percent">N% (first N-P-K number)</label>
-                  <input
-                    id="n-percent"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    max="100"
-                    placeholder="e.g. 24"
-                    value={nPercent}
-                    onChange={(e) => setNPercent(e.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="amount-lbs">Amount Applied (lbs)</label>
-                  <input
-                    id="amount-lbs"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    placeholder="e.g. 10"
-                    value={amountLbs}
-                    onChange={(e) => setAmountLbs(e.target.value)}
-                  />
-                </div>
-              </div>
             )}
 
             {isBentgrass && bStatus && (

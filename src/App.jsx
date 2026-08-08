@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import Home from './screens/Home'
 import Weather from './screens/Weather'
@@ -12,15 +12,19 @@ import Plan from './screens/Plan'
 import Settings from './screens/Settings'
 
 export default function App() {
+  const location = useLocation()
   return (
     <>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/weather" element={<Weather />} />
         <Route path="/log" element={<Log />} />
-        <Route path="/log/new" element={<LogEntryForm />} />
+        {/* Both routes render LogEntryForm; without a per-path key React Router
+            reuses the same instance across them and leaves stale form state
+            (e.g. navigating straight from editing one entry to a new one). */}
+        <Route path="/log/new" element={<LogEntryForm key={location.pathname} />} />
         <Route path="/log/:id" element={<LogEntryDetail />} />
-        <Route path="/log/:id/edit" element={<LogEntryForm />} />
+        <Route path="/log/:id/edit" element={<LogEntryForm key={location.pathname} />} />
         <Route path="/yards" element={<Zones />} />
         <Route path="/yards/new" element={<ZoneForm />} />
         <Route path="/yards/:id" element={<ZoneDetail />} />

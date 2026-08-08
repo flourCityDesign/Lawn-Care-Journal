@@ -121,17 +121,8 @@ export default function Plan() {
         }
         return (
           <div key={month} style={{ margin: '18px 0 0' }}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 8,
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {name}
-              </span>
+            <div className="month-label" style={{ margin: 0, marginBottom: 8 }}>
+              <span>{name}</span>
               <button
                 onClick={() => startAdd(month)}
                 style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 13, fontWeight: 600, padding: 0 }}

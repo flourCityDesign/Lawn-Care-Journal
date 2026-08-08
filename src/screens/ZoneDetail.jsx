@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import { CATEGORY_ICON, ALL_ZONES_ID, appliesToZone } from '../lib/constants'
 import { bentgrassZoneHistory } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
+import { groupByMonth } from '../lib/dateGroups'
 
 export default function ZoneDetail() {
   const { id } = useParams()
@@ -23,6 +24,7 @@ export default function ZoneDetail() {
   const history = applications
     .filter((a) => appliesToZone(a, zone.id))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+  const historyGroups = groupByMonth(history)
 
   const year = new Date().getFullYear()
   const nPages = nitrogenYtdByZone(applications, zones, year)
@@ -132,26 +134,31 @@ export default function ZoneDetail() {
       {history.length === 0 ? (
         <EmptyState icon="note" title="No activity logged for this zone yet" />
       ) : (
-        <Card>
-          {history.map((app) => {
-            const meta = CATEGORY_ICON[app.category] || CATEGORY_ICON.Other
-            return (
-              <Link to={`/log/${app.id}`} className="link-row" key={app.id}>
-                <div className="list-row">
-                  <IconBadge icon={meta.icon} color={meta.color} />
-                  <div className="list-row__body">
-                    <div className="list-row__title">{app.category}</div>
-                    <div className="list-row__subtitle">
-                      {app.zoneId === ALL_ZONES_ID ? 'Whole Lawn · ' : ''}
-                      {app.productName || app.notes || '—'}
+        historyGroups.map((group) => (
+          <div key={group.key}>
+            <div className="month-label">{group.label}</div>
+            <Card>
+              {group.items.map((app) => {
+                const meta = CATEGORY_ICON[app.category] || CATEGORY_ICON.Other
+                return (
+                  <Link to={`/log/${app.id}`} className="link-row" key={app.id}>
+                    <div className="list-row">
+                      <IconBadge icon={meta.icon} color={meta.color} />
+                      <div className="list-row__body">
+                        <div className="list-row__title">{app.category}</div>
+                        <div className="list-row__subtitle">
+                          {app.zoneId === ALL_ZONES_ID ? 'Whole Lawn · ' : ''}
+                          {app.productName || app.notes || '—'}
+                        </div>
+                      </div>
+                      <div className="list-row__meta">{formatRelativeDate(app.date)}</div>
                     </div>
-                  </div>
-                  <div className="list-row__meta">{formatRelativeDate(app.date)}</div>
-                </div>
-              </Link>
-            )
-          })}
-        </Card>
+                  </Link>
+                )
+              })}
+            </Card>
+          </div>
+        ))
       )}
     </Page>
   )

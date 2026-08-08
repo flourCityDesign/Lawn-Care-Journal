@@ -93,6 +93,9 @@ export function DataProvider({ children }) {
     },
     []
   )
+  const resetYearPlan = useCallback((year) => {
+    setPlanTasks((prev) => [...prev.filter((t) => t.year !== year), ...buildDefaultPlanTasks(year)])
+  }, [])
   const addPlanTask = useCallback((task) => {
     const record = { id: makeId(), year: new Date().getFullYear(), month: 1, category: 'Other', description: '', completed: false, ...task }
     setPlanTasks((prev) => [...prev, record])
@@ -140,6 +143,7 @@ export function DataProvider({ children }) {
       deletePhoto,
       planTasks,
       ensureYearPlan,
+      resetYearPlan,
       addPlanTask,
       updatePlanTask,
       deletePlanTask,
@@ -165,6 +169,7 @@ export function DataProvider({ children }) {
       deletePhoto,
       planTasks,
       ensureYearPlan,
+      resetYearPlan,
       addPlanTask,
       updatePlanTask,
       deletePlanTask,

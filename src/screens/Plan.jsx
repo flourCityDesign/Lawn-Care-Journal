@@ -12,7 +12,7 @@ const MONTH_NAMES = [
 
 export default function Plan() {
   const navigate = useNavigate()
-  const { planTasks, ensureYearPlan, addPlanTask, updatePlanTask, deletePlanTask } = useData()
+  const { planTasks, ensureYearPlan, resetYearPlan, addPlanTask, updatePlanTask, deletePlanTask } = useData()
   const [year, setYear] = useState(new Date().getFullYear())
   const [addingMonth, setAddingMonth] = useState(null)
   const [newCategory, setNewCategory] = useState('Other')
@@ -54,6 +54,12 @@ export default function Plan() {
     setAddingMonth(null)
   }
 
+  function handleReset() {
+    if (window.confirm(`Reset ${year} to the default plan? This removes all ${year} tasks, including custom ones and progress.`)) {
+      resetYearPlan(year)
+    }
+  }
+
   return (
     <Page>
       <PageHeader title="Seasonal Plan" backTo="/" />
@@ -75,6 +81,14 @@ export default function Plan() {
         </div>
         <div style={{ padding: '0 16px 16px' }}>
           <ProgressBar pct={planPct} color="var(--accent-2)" />
+        </div>
+        <div style={{ padding: '0 16px 16px', textAlign: 'center' }}>
+          <button
+            onClick={handleReset}
+            style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 12, textDecoration: 'underline', padding: 0 }}
+          >
+            Reset {year} to default plan
+          </button>
         </div>
       </Card>
 

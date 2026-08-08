@@ -26,10 +26,26 @@ export const BENTGRASS_CATEGORY = 'Bentgrass treatment'
 export const ALL_ZONES_ID = 'all'
 export const ALL_ZONES_LABEL = 'Whole Lawn (All Zones)'
 
+// Entries store zoneIds as an array (possibly [ALL_ZONES_ID] for Whole Lawn).
+// Older entries only have a singular zoneId string - normalize those here so
+// every other helper can treat all entries the same way.
+export function getZoneIds(app) {
+  if (Array.isArray(app.zoneIds)) return app.zoneIds
+  return app.zoneId != null ? [app.zoneId] : []
+}
+
 // A Whole Lawn application covers every zone, so it should show up
 // whenever viewing a specific zone's history/activity, not just "All".
 export function appliesToZone(app, zoneId) {
-  return app.zoneId === zoneId || app.zoneId === ALL_ZONES_ID
+  const ids = getZoneIds(app)
+  return ids.includes(zoneId) || ids.includes(ALL_ZONES_ID)
+}
+
+export function zoneLabelForApp(app, zones) {
+  const ids = getZoneIds(app)
+  if (ids.includes(ALL_ZONES_ID)) return ALL_ZONES_LABEL
+  const names = ids.map((id) => zones.find((z) => z.id === id)?.name || 'Deleted zone')
+  return names.join(', ') || 'Deleted zone'
 }
 
 export const CATEGORY_ICON = {

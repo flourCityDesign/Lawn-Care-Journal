@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
-import { CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY } from '../lib/constants'
+import { CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { parseLocalDate } from '../lib/date'
@@ -44,7 +44,7 @@ export default function LogEntryForm() {
   const [cutHeight, setCutHeight] = useState(initialCutHeight)
   const [nPercent, setNPercent] = useState(existing?.nPercent ?? '')
   const [amountLbs, setAmountLbs] = useState(existing?.amountLbs ?? '')
-  const [zoneId, setZoneId] = useState(existing?.zoneId ?? ALL_ZONES_ID)
+  const [zoneIds, setZoneIds] = useState(() => (existing ? getZoneIds(existing) : [ALL_ZONES_ID]))
   const [notes, setNotes] = useState(existing?.notes ?? prefill.notes ?? '')
   const [photoIds, setPhotoIds] = useState(existing?.photoIds ?? [])
   const [uploading, setUploading] = useState(false)
@@ -64,15 +64,24 @@ export default function LogEntryForm() {
     return bentgrassStatus(others, settings.bentgrassSeasonCap, settings.bentgrassRetreatDays, excludeCurrentYear)
   }, [isBentgrass, applications, existing, settings, date])
 
+  function toggleZone(id) {
+    setZoneIds((prev) => {
+      if (id === ALL_ZONES_ID) return prev.includes(ALL_ZONES_ID) ? [] : [ALL_ZONES_ID]
+      const withoutAll = prev.filter((z) => z !== ALL_ZONES_ID)
+      return withoutAll.includes(id) ? withoutAll.filter((z) => z !== id) : [...withoutAll, id]
+    })
+  }
+
   async function handlePhotoChange(e) {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
     setUploading(true)
     try {
       const newIds = []
+      const photoZoneId = zoneIds.length === 1 && zoneIds[0] !== ALL_ZONES_ID ? zoneIds[0] : null
       for (const file of files) {
         const dataUrl = await resizeImageFile(file)
-        const record = addPhoto({ dataUrl, date, zoneId: zoneId === ALL_ZONES_ID ? null : zoneId })
+        const record = addPhoto({ dataUrl, date, zoneId: photoZoneId })
         newIds.push(record.id)
       }
       setPhotoIds((prev) => [...prev, ...newIds])
@@ -96,6 +105,10 @@ export default function LogEntryForm() {
       setError('Pick a date.')
       return
     }
+    if (zoneIds.length === 0) {
+      setError('Pick at least one area treated.')
+      return
+    }
     const payload = {
       date,
       category,
@@ -104,7 +117,7 @@ export default function LogEntryForm() {
       cutHeight: isMow ? formatCutHeight(cutHeight) : '',
       nPercent: isFertilizer && nPercent !== '' ? Number(nPercent) : null,
       amountLbs: isFertilizer && amountLbs !== '' ? Number(amountLbs) : null,
-      zoneId,
+      zoneIds,
       notes: notes.trim(),
       photoIds,
     }
@@ -272,15 +285,26 @@ export default function LogEntryForm() {
             )}
 
             <div className="field">
-              <label htmlFor="zone">Area Treated</label>
-              <select id="zone" value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
-                <option value={ALL_ZONES_ID}>{ALL_ZONES_LABEL}</option>
+              <label>Area Treated</label>
+              <div className="pill-row pill-row--wrap">
+                <button
+                  type="button"
+                  className={'pill' + (zoneIds.includes(ALL_ZONES_ID) ? ' pill--active' : '')}
+                  onClick={() => toggleZone(ALL_ZONES_ID)}
+                >
+                  {ALL_ZONES_LABEL}
+                </button>
                 {zones.map((z) => (
-                  <option key={z.id} value={z.id}>
+                  <button
+                    key={z.id}
+                    type="button"
+                    className={'pill' + (zoneIds.includes(z.id) ? ' pill--active' : '')}
+                    onClick={() => toggleZone(z.id)}
+                  >
                     {z.name}
-                  </option>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
             <div className="field">

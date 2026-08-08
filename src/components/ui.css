@@ -124,6 +124,11 @@
   background: var(--status-good-bg);
 }
 
+.pill-row--wrap {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
 .btn {
   border: none;
   border-radius: var(--radius-sm);

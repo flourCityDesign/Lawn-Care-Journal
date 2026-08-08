@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, LogCard, logMetaItems, PillRow, EmptyState } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORY_ICON, LOG_FILTERS, ALL_ZONES_ID, ALL_ZONES_LABEL, filterGroupForCategory, appliesToZone } from '../lib/constants'
+import { CATEGORY_ICON, LOG_FILTERS, filterGroupForCategory, appliesToZone, zoneLabelForApp } from '../lib/constants'
 import { groupByMonth } from '../lib/dateGroups'
 
 export default function Log() {
@@ -28,11 +28,6 @@ export default function Log() {
   }, [applications, filter, zoneFilter, zones])
 
   const groups = useMemo(() => groupByMonth(filtered), [filtered])
-
-  function zoneLabel(zoneId) {
-    if (zoneId === ALL_ZONES_ID) return ALL_ZONES_LABEL
-    return zones.find((z) => z.id === zoneId)?.name || 'Deleted zone'
-  }
 
   return (
     <Page>
@@ -74,7 +69,7 @@ export default function Log() {
                     icon={meta.icon}
                     iconColor={meta.color}
                     title={app.category}
-                    subtitle={zoneLabel(app.zoneId)}
+                    subtitle={zoneLabelForApp(app, zones)}
                     date={app.date}
                     metaItems={logMetaItems(app)}
                   />

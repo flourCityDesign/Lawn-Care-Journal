@@ -44,7 +44,7 @@ export function DataProvider({ children }) {
       category: 'Mow',
       productName: '',
       rate: '',
-      zoneId: ALL_ZONES_ID,
+      zoneIds: [ALL_ZONES_ID],
       notes: '',
       photoIds: [],
       createdAt: new Date().toISOString(),

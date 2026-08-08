@@ -2,11 +2,18 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, IconBadge, ProgressBar, EmptyState, LogCard, logMetaItems, formatDate } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORY_ICON, ALL_ZONES_ID, appliesToZone } from '../lib/constants'
+import { CATEGORY_ICON, ALL_ZONES_ID, appliesToZone, getZoneIds } from '../lib/constants'
 import { bentgrassZoneHistory } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
 import { groupByMonth } from '../lib/dateGroups'
 import { parseLocalDate } from '../lib/date'
+
+function zoneHistorySubtitle(app, currentZoneId, zones) {
+  const ids = getZoneIds(app)
+  if (ids.includes(ALL_ZONES_ID)) return 'Whole Lawn'
+  const others = ids.filter((id) => id !== currentZoneId).map((id) => zones.find((z) => z.id === id)?.name).filter(Boolean)
+  return others.length > 0 ? `+ ${others.join(', ')}` : undefined
+}
 
 export default function ZoneDetail() {
   const { id } = useParams()
@@ -148,7 +155,7 @@ export default function ZoneDetail() {
                     icon={meta.icon}
                     iconColor={meta.color}
                     title={app.category}
-                    subtitle={app.zoneId === ALL_ZONES_ID ? 'Whole Lawn' : undefined}
+                    subtitle={zoneHistorySubtitle(app, zone.id, zones)}
                     date={app.date}
                     metaItems={logMetaItems(app)}
                   />

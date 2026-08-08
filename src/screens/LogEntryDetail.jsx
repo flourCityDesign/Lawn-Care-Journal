@@ -2,8 +2,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORY_ICON, ALL_ZONES_ID, ALL_ZONES_LABEL } from '../lib/constants'
-import { actualNLbs, totalLawnSqft } from '../lib/nitrogen'
+import { CATEGORY_ICON, zoneLabelForApp } from '../lib/constants'
+import { actualNLbs, appCoverageSqft } from '../lib/nitrogen'
 
 function Row({ icon, label, children }) {
   return (
@@ -32,12 +32,11 @@ export default function LogEntryDetail() {
   }
 
   const meta = CATEGORY_ICON[app.category] || CATEGORY_ICON.Other
-  const zoneName = app.zoneId === ALL_ZONES_ID ? ALL_ZONES_LABEL : zones.find((z) => z.id === app.zoneId)?.name || 'Deleted zone'
+  const zoneName = zoneLabelForApp(app, zones)
   const entryPhotos = (app.photoIds || []).map((pid) => photos.find((p) => p.id === pid)).filter(Boolean)
 
   const entryActualN = actualNLbs(app)
-  const entryAreaSqft =
-    app.zoneId === ALL_ZONES_ID ? totalLawnSqft(zones) : Number(zones.find((z) => z.id === app.zoneId)?.sqft) || 0
+  const entryAreaSqft = appCoverageSqft(app, zones)
   const entryNRate = entryActualN > 0 && entryAreaSqft > 0 ? entryActualN / (entryAreaSqft / 1000) : null
 
   function handleDelete() {
@@ -72,7 +71,7 @@ export default function LogEntryDetail() {
       </div>
 
       <Card>
-        <Row icon="layers" label="Zone">
+        <Row icon="layers" label="Area Treated">
           {zoneName}
         </Row>
 

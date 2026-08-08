@@ -4,7 +4,7 @@ import { useData } from '../lib/DataContext'
 import { Page, Card, CardBody, IconBadge, SectionLabel, ProgressBar, formatRelativeDate, statusTone } from '../components/ui'
 import Icon from '../components/Icon'
 import NBudgetCard from '../components/NBudgetCard'
-import { CATEGORY_ICON, ALL_ZONES_ID, ALL_ZONES_LABEL, appliesToZone } from '../lib/constants'
+import { CATEGORY_ICON, appliesToZone, zoneLabelForApp } from '../lib/constants'
 import { computeMowScore } from '../lib/mow'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
@@ -49,11 +49,6 @@ export default function Home() {
 
   function quickAdd(category) {
     navigate('/log/new', { state: { category } })
-  }
-
-  function zoneLabel(zoneId) {
-    if (zoneId === ALL_ZONES_ID) return ALL_ZONES_LABEL
-    return zones.find((z) => z.id === zoneId)?.name || 'Deleted zone'
   }
 
   return (
@@ -224,7 +219,7 @@ export default function Home() {
                   <IconBadge icon={meta.icon} color={meta.color} />
                   <div className="list-row__body">
                     <div className="list-row__title">{app.category}</div>
-                    <div className="list-row__subtitle">{zoneLabel(app.zoneId)}</div>
+                    <div className="list-row__subtitle">{zoneLabelForApp(app, zones)}</div>
                   </div>
                   <div className="list-row__meta">{formatRelativeDate(app.date)}</div>
                 </div>

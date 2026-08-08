@@ -3,6 +3,7 @@ export const CATEGORIES = [
   'Herbicide',
   'Pre-emergent',
   'Bentgrass treatment',
+  'Soil Amendments',
   'Seed',
   'Mow',
   'Other',
@@ -11,7 +12,7 @@ export const CATEGORIES = [
 // Groupings used for the Log screen's pill filters
 export const LOG_FILTERS = ['All', 'Mow', 'Treatment', 'Seed', 'Notes']
 
-export const TREATMENT_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Bentgrass treatment']
+export const TREATMENT_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Bentgrass treatment', 'Soil Amendments']
 
 export function filterGroupForCategory(category) {
   if (category === 'Mow') return 'Mow'
@@ -31,6 +32,7 @@ export const CATEGORY_ICON = {
   Herbicide: { icon: 'flask', color: '#F2A65A' },
   'Pre-emergent': { icon: 'flask', color: '#F2A65A' },
   'Bentgrass treatment': { icon: 'flask', color: '#FF6B6B' },
+  'Soil Amendments': { icon: 'leaf', color: '#B08968' },
   Seed: { icon: 'seed', color: '#7FFF3D' },
   Other: { icon: 'note', color: '#9AA5A0' },
 }

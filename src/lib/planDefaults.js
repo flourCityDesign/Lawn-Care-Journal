@@ -17,7 +17,7 @@ const TEMPLATE = [
   },
   {
     month: 4,
-    category: 'Other',
+    category: 'Soil Amendments',
     description:
       'RGS (3 oz/1,000, 15 oz total) + Humic12 (3-6 oz/1,000, 15-30 oz total), tank mixed. Water into soil afterward.',
   },
@@ -39,7 +39,7 @@ const TEMPLATE = [
   },
   {
     month: 6,
-    category: 'Other',
+    category: 'Soil Amendments',
     description: 'RGS (3 oz/1,000) + Humic12 (3-6 oz/1,000) — optional second soil-conditioning application.',
   },
   {
@@ -83,7 +83,7 @@ const TEMPLATE = [
   },
   {
     month: 8,
-    category: 'Other',
+    category: 'Soil Amendments',
     description:
       'Vermi-Green Organic Compost topdress, ~1/4" (~4 cu yd for 5,000 sqft). Spread evenly, work in with leveling rake/drag.',
   },
@@ -107,7 +107,7 @@ const TEMPLATE = [
   },
   {
     month: 10,
-    category: 'Other',
+    category: 'Soil Amendments',
     description: 'RGS (3 oz/1,000) + Humic12 (3-6 oz/1,000) — optional final application of the year.',
   },
   {

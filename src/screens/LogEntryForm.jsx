@@ -109,21 +109,19 @@ export default function LogEntryForm() {
       <Card>
         <CardBody>
           <form onSubmit={handleSubmit}>
-            <div className="field-row">
-              <div className="field">
-                <label htmlFor="entry-date">Date</label>
-                <input id="entry-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-              </div>
-              <div className="field">
-                <label htmlFor="entry-category">Category</label>
-                <select id="entry-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="field">
+              <label htmlFor="entry-date">Date</label>
+              <input id="entry-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="entry-category">Category</label>
+              <select id="entry-category" value={category} onChange={(e) => setCategory(e.target.value)}>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {isMow ? (

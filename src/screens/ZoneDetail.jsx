@@ -1,9 +1,10 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
-import { Page, PageHeader, Card, CardBody, IconBadge, EmptyState, formatRelativeDate, formatDate } from '../components/ui'
+import { Page, PageHeader, Card, CardBody, IconBadge, ProgressBar, EmptyState, formatRelativeDate, formatDate } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORY_ICON } from '../lib/constants'
 import { bentgrassZoneHistory } from '../lib/bentgrass'
+import { nitrogenYtdByZone } from '../lib/nitrogen'
 
 export default function ZoneDetail() {
   const { id } = useParams()
@@ -22,6 +23,13 @@ export default function ZoneDetail() {
   const history = applications
     .filter((a) => a.zoneId === zone.id)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const year = new Date().getFullYear()
+  const nPages = nitrogenYtdByZone(applications, zones, year)
+  const nPage = nPages.find((p) => p.id === zone.id)
+  const nCap = settings.nitrogenAnnualCap
+  const nOverBudget = nCap > 0 && nPage.per1000 > nCap
+  const nColor = nOverBudget ? 'var(--status-bad)' : 'var(--status-good)'
 
   const bentgrassHistory = bentgrassZoneHistory(applications, zone.id)
   const lastBentgrass = bentgrassHistory[0]
@@ -77,6 +85,22 @@ export default function ZoneDetail() {
           {zone.notes && (
             <p style={{ marginTop: 16, color: 'var(--text-dim)', fontSize: 14, lineHeight: 1.5 }}>{zone.notes}</p>
           )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <IconBadge icon="leaf" color={nColor} size={32} iconSize={16} />
+            <div style={{ fontWeight: 700 }}>N Budget</div>
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, color: nColor }}>
+            {nPage.per1000.toFixed(1)}{' '}
+            <span style={{ fontSize: 15, color: 'var(--text-dim)', fontWeight: 600 }}>/ {nCap} lbs N/1,000 sqft</span>
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <ProgressBar pct={nCap > 0 ? (nPage.per1000 / nCap) * 100 : 0} color={nColor} />
+          </div>
         </CardBody>
       </Card>
 

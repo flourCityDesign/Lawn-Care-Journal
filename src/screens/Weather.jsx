@@ -43,7 +43,12 @@ export default function Weather() {
   useEffect(() => {
     if (!hasLocation) return
     const staleMs = 1000 * 60 * 60 // 1 hour
-    if (!weatherCache || Date.now() - new Date(weatherCache.fetchedAt).getTime() > staleMs) {
+    const isStale = !weatherCache || Date.now() - new Date(weatherCache.fetchedAt).getTime() > staleMs
+    // A cache saved before a weatherCache field was added (e.g. dailyHistory
+    // for Disease Risk) won't have it - treat that as stale too, so a new
+    // feature shows up on next open instead of silently waiting out the hour.
+    const missingFields = weatherCache && !weatherCache.dailyHistory
+    if (isStale || missingFields) {
       refresh()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -151,6 +151,42 @@ export default function Weather() {
             </CardBody>
           </Card>
 
+          <SectionLabel icon="droplet">Recent Rainfall</SectionLabel>
+          <Card>
+            <CardBody>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={{ color: 'var(--text-dim)', fontSize: 13 }}>Last {weatherCache.rainHistory.length} days</span>
+                <span style={{ fontWeight: 700 }}>{weatherCache.rainWeekTotalIn.toFixed(2)}" total</span>
+              </div>
+              {weatherCache.rainHistory.map((d, i) => {
+                const maxAmount = Math.max(...weatherCache.rainHistory.map((r) => r.amount), 0.1)
+                const daysAgo = weatherCache.rainHistory.length - i
+                const label = daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`
+                return (
+                  <div key={d.date} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <div style={{ width: 78, fontSize: 12, color: 'var(--text-dim)', flexShrink: 0 }}>{label}</div>
+                    <div style={{ flex: 1, height: 8, background: 'var(--card-alt)', borderRadius: 999, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${Math.max(2, (d.amount / maxAmount) * 100)}%`,
+                          background: 'var(--accent)',
+                          borderRadius: 999,
+                        }}
+                      />
+                    </div>
+                    <div style={{ width: 42, fontSize: 13, textAlign: 'right', flexShrink: 0 }}>{d.amount.toFixed(2)}"</div>
+                  </div>
+                )
+              })}
+              {weatherCache.rainLast2DaysIn >= 0.15 && (
+                <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-dim)' }}>
+                  Ground may still be wet — mow scores adjusted down
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
           {diseaseRisk?.today && (
             <>
               <SectionLabel icon="shield-alert">Disease Risk</SectionLabel>
@@ -201,42 +237,6 @@ export default function Weather() {
               </Card>
             </>
           )}
-
-          <SectionLabel icon="droplet">Recent Rainfall</SectionLabel>
-          <Card>
-            <CardBody>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ color: 'var(--text-dim)', fontSize: 13 }}>Last {weatherCache.rainHistory.length} days</span>
-                <span style={{ fontWeight: 700 }}>{weatherCache.rainWeekTotalIn.toFixed(2)}" total</span>
-              </div>
-              {weatherCache.rainHistory.map((d, i) => {
-                const maxAmount = Math.max(...weatherCache.rainHistory.map((r) => r.amount), 0.1)
-                const daysAgo = weatherCache.rainHistory.length - i
-                const label = daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`
-                return (
-                  <div key={d.date} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                    <div style={{ width: 78, fontSize: 12, color: 'var(--text-dim)', flexShrink: 0 }}>{label}</div>
-                    <div style={{ flex: 1, height: 8, background: 'var(--card-alt)', borderRadius: 999, overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          width: `${Math.max(2, (d.amount / maxAmount) * 100)}%`,
-                          background: 'var(--accent)',
-                          borderRadius: 999,
-                        }}
-                      />
-                    </div>
-                    <div style={{ width: 42, fontSize: 13, textAlign: 'right', flexShrink: 0 }}>{d.amount.toFixed(2)}"</div>
-                  </div>
-                )
-              })}
-              {weatherCache.rainLast2DaysIn >= 0.15 && (
-                <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-dim)' }}>
-                  Ground may still be wet — mow scores adjusted down
-                </div>
-              )}
-            </CardBody>
-          </Card>
 
           <SectionLabel icon="thermometer">Soil Temperature</SectionLabel>
           <Card>

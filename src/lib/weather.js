@@ -162,10 +162,10 @@ export async function fetchWeather({ lat, lon }) {
     .filter((d) => d.date <= todayKey)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
 
-  const last7Complete = soilTempHistory.slice(-7)
-  const soilTemp7DayAvg =
-    last7Complete.length > 0
-      ? last7Complete.reduce((s, d) => s + d.avg, 0) / last7Complete.length
+  const last5Complete = soilTempHistory.slice(-5)
+  const soilTemp5DayAvg =
+    last5Complete.length > 0
+      ? last5Complete.reduce((s, d) => s + d.avg, 0) / last5Complete.length
       : null
 
   const last24 = soilHourly.slice(-24).filter((v) => v != null)
@@ -189,7 +189,7 @@ export async function fetchWeather({ lat, lon }) {
     rainLast2DaysIn,
     rainWeekTotalIn: rainHistory.reduce((s, d) => s + (d.amount || 0), 0),
     soilTempHistory: soilTempHistory.slice(-45),
-    soilTemp7DayAvg,
+    soilTemp5DayAvg,
     soilTempLast24hAvg,
   }
 }

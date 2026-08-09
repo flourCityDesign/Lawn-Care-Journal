@@ -220,6 +220,12 @@ const PATHS = {
       <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
     </>
   ),
+  ruler: (
+    <>
+      <rect x="3" y="7" width="18" height="10" rx="2" />
+      <path d="M7 7v3M11 7v2M15 7v3" />
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 20, strokeWidth = 2, className, style }) {

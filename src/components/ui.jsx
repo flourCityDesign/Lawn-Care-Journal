@@ -153,7 +153,7 @@ export function formatDate(dateStr) {
 
 export function logMetaItems(app) {
   const items = []
-  if (app.cutHeight) items.push({ icon: 'target', text: `Cut height: ${app.cutHeight}` })
+  if (app.cutHeight) items.push({ icon: 'ruler', text: `Cut height: ${app.cutHeight}` })
   if (app.products?.length) {
     const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
     app.products.forEach((p) => {

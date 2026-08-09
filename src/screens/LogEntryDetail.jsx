@@ -78,7 +78,7 @@ export default function LogEntryDetail() {
         </Row>
 
         {app.cutHeight && (
-          <Row icon="target" label="Cut Height">
+          <Row icon="ruler" label="Cut Height">
             {app.cutHeight}
           </Row>
         )}

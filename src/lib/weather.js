@@ -31,8 +31,8 @@ function shiftDateKey(key, days) {
 
 // Average relative humidity from 9pm to 6am, keyed by the date the evening
 // falls on (e.g. 9pm Tuesday through 6am Wednesday is "Tuesday night").
-// Overnight humidity is the standard proxy for leaf wetness duration used
-// by turf disease models, since Open-Meteo doesn't expose leaf wetness.
+// Used for the "consecutive humid nights" streak bonus - a leaf-wetness-
+// duration proxy, separate from the Smith-Kerns inputs below.
 function computeOvernightRH(times, rhValues) {
   const byNight = new Map()
   times.forEach((t, i) => {
@@ -56,6 +56,25 @@ function computeOvernightRH(times, rhValues) {
   return result
 }
 
+// True calendar-day mean of an hourly series, keyed by date. The published
+// Smith-Kerns model is defined on daily mean RH and daily mean air temp
+// (all 24 hours), not overnight-only or (high+low)/2.
+function computeDailyMean(times, values) {
+  const byDay = new Map()
+  times.forEach((t, i) => {
+    const v = values[i]
+    if (v == null) return
+    const day = t.slice(0, 10)
+    if (!byDay.has(day)) byDay.set(day, [])
+    byDay.get(day).push(v)
+  })
+  const result = new Map()
+  byDay.forEach((vals, day) => {
+    result.set(day, vals.reduce((s, v) => s + v, 0) / vals.length)
+  })
+  return result
+}
+
 export async function fetchWeather({ lat, lon }) {
   const params = new URLSearchParams({
     latitude: lat,
@@ -63,7 +82,7 @@ export async function fetchWeather({ lat, lon }) {
     current: 'temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code',
     daily:
       'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,weather_code',
-    hourly: 'soil_temperature_6cm,relative_humidity_2m',
+    hourly: 'soil_temperature_6cm,relative_humidity_2m,temperature_2m',
     past_days: '7',
     forecast_days: '8',
     temperature_unit: 'fahrenheit',
@@ -101,18 +120,21 @@ export async function fetchWeather({ lat, lon }) {
   const precipChanceToday = todayIdx >= 0 ? data.daily.precipitation_probability_max[todayIdx] : 0
   const rainLast2DaysIn = rainHistory.slice(-2).reduce((sum, d) => sum + (d.amount || 0), 0)
 
-  // --- disease risk inputs: past days through today, with overnight RH ---
+  // --- disease risk inputs: past days, today, and forecast days ---
   const overnightRHByNight = computeOvernightRH(data.hourly.time, data.hourly.relative_humidity_2m)
-  const dailyHistory = data.daily.time
-    .map((date, i) => ({
-      date,
-      high: data.daily.temperature_2m_max[i],
-      low: data.daily.temperature_2m_min[i],
-      precipSum: data.daily.precipitation_sum[i] ?? 0,
-      overnightRH: overnightRHByNight.get(date) ?? null,
-    }))
-    .filter((d) => d.date <= todayKey)
-    .slice(-10)
+  const meanRHByDay = computeDailyMean(data.hourly.time, data.hourly.relative_humidity_2m)
+  const meanTempByDay = computeDailyMean(data.hourly.time, data.hourly.temperature_2m)
+  const dailyWithDiseaseInputs = data.daily.time.map((date, i) => ({
+    date,
+    high: data.daily.temperature_2m_max[i],
+    low: data.daily.temperature_2m_min[i],
+    precipSum: data.daily.precipitation_sum[i] ?? 0,
+    overnightRH: overnightRHByNight.get(date) ?? null,
+    meanRH: meanRHByDay.get(date) ?? null,
+    meanTempF: meanTempByDay.get(date) ?? null,
+  }))
+  const dailyHistory = dailyWithDiseaseInputs.filter((d) => d.date <= todayKey).slice(-10)
+  const dailyForecast = dailyWithDiseaseInputs.filter((d) => d.date > todayKey).slice(0, 5)
 
   // --- soil temperature (hourly -> daily means -> 5-day rolling avg) ---
   const soilHourly = data.hourly.soil_temperature_6cm
@@ -155,6 +177,7 @@ export async function fetchWeather({ lat, lon }) {
     },
     daily,
     dailyHistory,
+    dailyForecast,
     rainHistory,
     rainLast2DaysIn,
     rainWeekTotalIn: rainHistory.reduce((s, d) => s + (d.amount || 0), 0),

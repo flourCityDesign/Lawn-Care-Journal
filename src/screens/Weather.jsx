@@ -82,7 +82,7 @@ export default function Weather() {
       })
     : null
 
-  const diseaseRisk = weatherCache ? computeDiseaseRiskHistory(weatherCache.dailyHistory) : null
+  const diseaseRisk = weatherCache ? computeDiseaseRiskHistory(weatherCache.dailyHistory, weatherCache.dailyForecast) : null
 
   return (
     <Page>
@@ -207,6 +207,12 @@ export default function Weather() {
                     <div style={{ color: 'var(--text-dim)', fontSize: 12, textTransform: 'capitalize' }}>{diseaseRisk.today.trend}</div>
                   </div>
                   <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-dim)' }}>{diseaseRisk.today.explanation}</div>
+                  {diseaseRisk.today.smithKernsPercent != null && (
+                    <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-dim)' }}>
+                      Dollar spot probability (Smith-Kerns model):{' '}
+                      <span style={{ fontWeight: 700, color: 'var(--text)' }}>{Math.round(diseaseRisk.today.smithKernsPercent)}%</span>
+                    </div>
+                  )}
 
                   <div style={{ marginTop: 16 }}>
                     {diseaseRisk.history.slice(-7).map((d, i, arr) => {
@@ -230,7 +236,52 @@ export default function Weather() {
                       )
                     })}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
+
+                  {diseaseRisk.forecast.length > 0 && (
+                    <>
+                      <div
+                        style={{
+                          borderTop: '1px solid var(--card-border)',
+                          marginTop: 8,
+                          paddingTop: 14,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: 'var(--text-dim)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.06em',
+                        }}
+                      >
+                        Next {diseaseRisk.forecast.length} Days
+                      </div>
+                      <div style={{ marginTop: 12 }}>
+                        {diseaseRisk.forecast.map((d) => (
+                          <div key={d.date} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                            <div style={{ width: 78, fontSize: 12, color: 'var(--text-dim)', flexShrink: 0 }}>
+                              {parseLocalDate(d.date).toLocaleDateString(undefined, { weekday: 'short', month: 'numeric', day: 'numeric' })}
+                            </div>
+                            <div style={{ flex: 1, height: 8, background: 'var(--card-alt)', borderRadius: 999, overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  height: '100%',
+                                  width: `${d.score * 10}%`,
+                                  background: statusTone(severityTone(d.severity)).color,
+                                  borderRadius: 999,
+                                  opacity: 0.7,
+                                }}
+                              />
+                            </div>
+                            <div style={{ width: 20, fontSize: 13, textAlign: 'right', flexShrink: 0 }}>{d.score}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
+                        Forecast days are estimated from forecasted weather, not actuals - useful for planning a preventative
+                        application ahead of rising risk
+                      </div>
+                    </>
+                  )}
+
+                  <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 8 }}>
                     Estimated from humidity and temperature trends, not a lab diagnosis
                   </div>
                 </CardBody>

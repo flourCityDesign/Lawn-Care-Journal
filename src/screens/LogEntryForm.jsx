@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
-import { CATEGORIES, TREATMENT_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
+import { CATEGORIES, TREATMENT_CATEGORIES, N_TRACKED_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { appCoverageSqft } from '../lib/nitrogen'
@@ -80,7 +80,7 @@ export default function LogEntryForm() {
 
   const isMow = category === 'Mow'
   const isTreatment = TREATMENT_CATEGORIES.includes(category)
-  const isFertilizer = category === 'Fertilizer'
+  const showNPercent = N_TRACKED_CATEGORIES.includes(category)
   const isBentgrass = category === BENTGRASS_CATEGORY
 
   const productSuggestions = useMemo(() => productNameHistory(category), [productNameHistory, category])
@@ -165,7 +165,7 @@ export default function LogEntryForm() {
               .map((p) => ({
                 name: p.name.trim(),
                 rate: p.rate,
-                nPercent: isFertilizer && p.nPercent !== '' ? Number(p.nPercent) : null,
+                nPercent: showNPercent && p.nPercent !== '' ? Number(p.nPercent) : null,
                 spreaderSetting: productType === 'granular' ? p.spreaderSetting.trim() : '',
                 ozPerGallon: productType === 'liquid' ? p.ozPerGallon.trim() : '',
               })),
@@ -321,7 +321,7 @@ export default function LogEntryForm() {
                         />
                         <span className="icon-field__suffix">{productType === 'liquid' ? 'oz / 1k sqft' : 'lbs / 1k sqft'}</span>
                       </div>
-                      {isFertilizer && (
+                      {showNPercent && (
                         <div className="icon-field">
                           <Icon name="leaf" size={16} className="icon-field__icon" />
                           <input

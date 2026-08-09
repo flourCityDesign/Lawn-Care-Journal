@@ -14,6 +14,11 @@ export const LOG_FILTERS = ['All', 'Mow', 'Treatment', 'Seed', 'Notes']
 
 export const TREATMENT_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Bentgrass treatment', 'Soil Amendments']
 
+// Categories whose products can carry an N% (some herbicides, pre-emergents,
+// and soil amendments are "weed-and-feed" style and do carry nitrogen).
+// Bentgrass treatment is intentionally excluded.
+export const N_TRACKED_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Soil Amendments']
+
 export function filterGroupForCategory(category) {
   if (category === 'Mow') return 'Mow'
   if (category === 'Seed') return 'Seed'

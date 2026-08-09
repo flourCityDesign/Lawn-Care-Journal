@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, Button, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORY_ICON, zoneLabelForApp } from '../lib/constants'
+import { CATEGORY_ICON, N_TRACKED_CATEGORIES, zoneLabelForApp } from '../lib/constants'
 import { appNRatePer1000 } from '../lib/nitrogen'
 
 function Row({ icon, label, children }) {
@@ -35,7 +35,7 @@ export default function LogEntryDetail() {
   const zoneName = zoneLabelForApp(app, zones)
   const entryPhotos = (app.photoIds || []).map((pid) => photos.find((p) => p.id === pid)).filter(Boolean)
 
-  const entryNRate = app.category === 'Fertilizer' ? appNRatePer1000(app, zones) : null
+  const entryNRate = N_TRACKED_CATEGORIES.includes(app.category) ? appNRatePer1000(app, zones) : null
 
   function handleDelete() {
     if (window.confirm('Delete this log entry?')) {

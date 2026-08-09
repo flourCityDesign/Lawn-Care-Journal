@@ -1,7 +1,9 @@
-// Nitrogen budget: sum of (product amount lbs) x (N% / 100) across fertilizer
-// applications this year, expressed per 1,000 sqft of total lawn area.
+// Nitrogen budget: sum of (product amount lbs) x (N% / 100) across
+// N-tracked applications this year, expressed per 1,000 sqft of total lawn
+// area. N-tracked categories are Fertilizer plus any other treatment type
+// whose products can carry N (weed-and-feed herbicides, etc).
 
-import { ALL_ZONES_ID, ALL_ZONES_LABEL, getZoneIds } from './constants'
+import { ALL_ZONES_ID, ALL_ZONES_LABEL, N_TRACKED_CATEGORIES, getZoneIds } from './constants'
 import { parseLocalDate } from './date'
 
 export function totalLawnSqft(zones) {
@@ -18,7 +20,7 @@ export function appCoverageSqft(app, zones) {
 }
 
 export function actualNLbs(app) {
-  if (app.category !== 'Fertilizer') return 0
+  if (!N_TRACKED_CATEGORIES.includes(app.category)) return 0
   const amount = Number(app.amountLbs) || 0
   const nPercent = Number(app.nPercent) || 0
   return amount * (nPercent / 100)
@@ -37,7 +39,7 @@ function productLbsPer1000(product, productType) {
 // the products model (older single-product entries), so callers can fall
 // back to the legacy amount-applied calculation.
 export function entryNRatePer1000(app) {
-  if (app.category !== 'Fertilizer' || !Array.isArray(app.products)) return null
+  if (!N_TRACKED_CATEGORIES.includes(app.category) || !Array.isArray(app.products)) return null
   return app.products.reduce((sum, p) => {
     const nPercent = Number(p.nPercent) || 0
     if (nPercent <= 0) return sum
@@ -59,7 +61,7 @@ export function appNRatePer1000(app, zones) {
 export function nitrogenYtd(applications, zones, year = new Date().getFullYear()) {
   const sqft = totalLawnSqft(zones)
   const ytdApps = applications.filter(
-    (a) => a.category === 'Fertilizer' && parseLocalDate(a.date).getFullYear() === year
+    (a) => N_TRACKED_CATEGORIES.includes(a.category) && parseLocalDate(a.date).getFullYear() === year
   )
   const totalLbsN = ytdApps.reduce((sum, a) => sum + actualNLbs(a), 0)
   const per1000 = sqft > 0 ? totalLbsN / (sqft / 1000) : 0
@@ -73,7 +75,7 @@ export function nitrogenYtd(applications, zones, year = new Date().getFullYear()
 // rather than being diluted across a larger area.
 export function nitrogenYtdByZone(applications, zones, year = new Date().getFullYear()) {
   const totalSqft = totalLawnSqft(zones)
-  const yearApps = applications.filter((a) => a.category === 'Fertilizer' && parseLocalDate(a.date).getFullYear() === year)
+  const yearApps = applications.filter((a) => N_TRACKED_CATEGORIES.includes(a.category) && parseLocalDate(a.date).getFullYear() === year)
 
   const perZoneRate = {}
   zones.forEach((z) => {

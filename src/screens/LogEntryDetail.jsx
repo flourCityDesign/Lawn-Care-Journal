@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
-import { Page, PageHeader, Card, IconBadge, formatDate, formatRelativeDate } from '../components/ui'
+import { Page, PageHeader, Card, IconBadge, Button, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORY_ICON, zoneLabelForApp } from '../lib/constants'
 import { appNRatePer1000 } from '../lib/nitrogen'
@@ -44,6 +44,10 @@ export default function LogEntryDetail() {
     }
   }
 
+  function handleDuplicate() {
+    navigate('/log/new', { state: { duplicateFrom: app } })
+  }
+
   return (
     <Page>
       <PageHeader
@@ -72,19 +76,6 @@ export default function LogEntryDetail() {
         <Row icon="layers" label="Area Treated">
           {zoneName}
         </Row>
-
-        {entryPhotos.length > 0 && (
-          <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {entryPhotos.map((p) => (
-              <img
-                key={p.id}
-                src={p.dataUrl}
-                alt=""
-                style={{ width: '100%', maxWidth: 320, borderRadius: 12, display: 'block' }}
-              />
-            ))}
-          </div>
-        )}
 
         {app.cutHeight && (
           <Row icon="target" label="Cut Height">
@@ -140,7 +131,26 @@ export default function LogEntryDetail() {
             {app.notes}
           </Row>
         )}
+
+        {entryPhotos.length > 0 && (
+          <div style={{ padding: '14px 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {entryPhotos.map((p) => (
+              <img
+                key={p.id}
+                src={p.dataUrl}
+                alt=""
+                style={{ width: '100%', maxWidth: 320, borderRadius: 12, display: 'block' }}
+              />
+            ))}
+          </div>
+        )}
       </Card>
+
+      <div style={{ marginTop: 14 }}>
+        <Button variant="secondary" icon="copy" block onClick={handleDuplicate}>
+          Duplicate Entry
+        </Button>
+      </div>
     </Page>
   )
 }

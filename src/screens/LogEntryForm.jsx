@@ -36,21 +36,25 @@ export default function LogEntryForm() {
   const existing = id ? applications.find((a) => a.id === id) : null
   const isEdit = Boolean(existing)
   const prefill = location.state || {}
+  // A duplicated entry prefills every field like an edit would, except the
+  // date (defaults to today) and photos (not carried over) - and it isn't
+  // saved until Save Entry is pressed, same as any other new entry.
+  const source = existing ?? prefill.duplicateFrom ?? null
 
   const lastMow = [...applications]
     .filter((a) => a.category === 'Mow' && a.id !== existing?.id)
     .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-  const initialCutHeight = parseCutHeight(existing?.cutHeight) ?? parseCutHeight(lastMow?.cutHeight) ?? DEFAULT_CUT_HEIGHT
+  const initialCutHeight = parseCutHeight(source?.cutHeight) ?? parseCutHeight(lastMow?.cutHeight) ?? DEFAULT_CUT_HEIGHT
 
   const [date, setDate] = useState(existing?.date ?? new Date().toISOString().slice(0, 10))
-  const [category, setCategory] = useState(existing?.category ?? prefill.category ?? 'Mow')
-  const [productName, setProductName] = useState(existing?.productName ?? prefill.productName ?? '')
-  const [rate, setRate] = useState(existing?.rate ?? prefill.rate ?? '')
+  const [category, setCategory] = useState(source?.category ?? prefill.category ?? 'Mow')
+  const [productName, setProductName] = useState(source?.productName ?? prefill.productName ?? '')
+  const [rate, setRate] = useState(source?.rate ?? prefill.rate ?? '')
   const [cutHeight, setCutHeight] = useState(initialCutHeight)
-  const [productType, setProductType] = useState(existing?.productType ?? 'granular')
+  const [productType, setProductType] = useState(source?.productType ?? 'granular')
   const [products, setProducts] = useState(() => {
-    if (existing?.products?.length) return existing.products
-    if (existing?.productName) {
+    if (source?.products?.length) return source.products
+    if (source?.productName) {
       // The old rate field was freeform text describing a total amount
       // applied (e.g. "10 lbs"), not a lbs/1,000 sqft density like the new
       // rate field expects - carrying it over as-is would silently zero out
@@ -58,18 +62,18 @@ export default function LogEntryForm() {
       // entries recorded a clean numeric amountLbs we can convert from;
       // other legacy categories just start with rate blank for re-entry.
       const legacyRate =
-        existing.category === 'Fertilizer' && existing.amountLbs
+        source.category === 'Fertilizer' && source.amountLbs
           ? (() => {
-              const coverageSqft = appCoverageSqft(existing, zones)
-              return coverageSqft > 0 ? String(+(Number(existing.amountLbs) / (coverageSqft / 1000)).toFixed(2)) : ''
+              const coverageSqft = appCoverageSqft(source, zones)
+              return coverageSqft > 0 ? String(+(Number(source.amountLbs) / (coverageSqft / 1000)).toFixed(2)) : ''
             })()
           : ''
-      return [{ ...emptyProduct(), name: existing.productName, rate: legacyRate, nPercent: existing.nPercent ?? '' }]
+      return [{ ...emptyProduct(), name: source.productName, rate: legacyRate, nPercent: source.nPercent ?? '' }]
     }
     return [emptyProduct()]
   })
-  const [zoneIds, setZoneIds] = useState(() => (existing ? getZoneIds(existing) : [ALL_ZONES_ID]))
-  const [notes, setNotes] = useState(existing?.notes ?? prefill.notes ?? '')
+  const [zoneIds, setZoneIds] = useState(() => (source ? getZoneIds(source) : [ALL_ZONES_ID]))
+  const [notes, setNotes] = useState(source?.notes ?? prefill.notes ?? '')
   const [photoIds, setPhotoIds] = useState(existing?.photoIds ?? [])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')

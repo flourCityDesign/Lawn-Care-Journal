@@ -8,6 +8,7 @@ import { CATEGORY_ICON, appliesToZone, zoneLabelForApp } from '../lib/constants'
 import { computeMowScore } from '../lib/mow'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
+import { computeDiseaseRiskHistory } from '../lib/diseaseRisk'
 import './Home.css'
 
 function greeting() {
@@ -46,6 +47,8 @@ export default function Home() {
         highF: weatherCache.current?.high ?? weatherCache.current?.temp ?? 70,
       })
     : null
+
+  const diseaseToday = weatherCache ? computeDiseaseRiskHistory(weatherCache.dailyHistory).today : null
 
   function quickAdd(category) {
     navigate('/log/new', { state: { category } })
@@ -108,6 +111,33 @@ export default function Home() {
             </Link>
           </CardBody>
         </Card>
+      )}
+
+      {diseaseToday && diseaseToday.score >= 7 && (
+        <Link to="/weather" className="link-row">
+          <div
+            style={{
+              background: diseaseToday.severity === 'severe' ? 'var(--status-bad-bg)' : 'var(--status-caution-bg)',
+              border: `1px solid ${diseaseToday.severity === 'severe' ? 'var(--danger)' : 'var(--status-caution)'}`,
+              borderRadius: 12,
+              padding: 12,
+              marginTop: 14,
+              display: 'flex',
+              gap: 10,
+              alignItems: 'flex-start',
+            }}
+          >
+            <Icon
+              name="shield-alert"
+              size={18}
+              style={{ color: diseaseToday.severity === 'severe' ? 'var(--danger)' : 'var(--status-caution)', flexShrink: 0, marginTop: 1 }}
+            />
+            <div style={{ fontSize: 13, color: diseaseToday.severity === 'severe' ? 'var(--danger)' : 'var(--status-caution)' }}>
+              <div style={{ fontWeight: 700 }}>{diseaseToday.label}</div>
+              <div style={{ marginTop: 2 }}>{diseaseToday.explanation}</div>
+            </div>
+          </div>
+        </Link>
       )}
 
       <div className="quick-actions">

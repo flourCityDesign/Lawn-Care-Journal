@@ -226,6 +226,13 @@ const PATHS = {
       <path d="M7 7v3M11 7v2M15 7v3" />
     </>
   ),
+  'shield-alert': (
+    <>
+      <path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3Z" />
+      <line x1="12" y1="8" x2="12" y2="13" />
+      <circle cx="12" cy="16" r="0.8" fill="currentColor" stroke="none" />
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 20, strokeWidth = 2, className, style }) {

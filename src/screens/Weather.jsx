@@ -6,6 +6,7 @@ import Icon from '../components/Icon'
 import SoilTempChart from '../components/SoilTempChart'
 import { fetchWeather, weatherCodeLabel, SOIL_TEMP_DEPTH_NOTE, GERMINATION_THRESHOLD_F } from '../lib/weather'
 import { computeMowScore } from '../lib/mow'
+import { computeDiseaseRiskHistory, severityTone } from '../lib/diseaseRisk'
 import { parseLocalDate } from '../lib/date'
 
 function timeAgo(iso) {
@@ -76,6 +77,8 @@ export default function Weather() {
       })
     : null
 
+  const diseaseRisk = weatherCache ? computeDiseaseRiskHistory(weatherCache.dailyHistory) : null
+
   return (
     <Page>
       <PageHeader
@@ -142,6 +145,57 @@ export default function Weather() {
               </div>
             </CardBody>
           </Card>
+
+          {diseaseRisk?.today && (
+            <>
+              <SectionLabel icon="shield-alert">Disease Risk</SectionLabel>
+              <Card>
+                <CardBody>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                        <span style={{ fontSize: 34, fontWeight: 800, color: statusTone(severityTone(diseaseRisk.today.severity)).color }}>
+                          {diseaseRisk.today.score}
+                        </span>
+                        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 600 }}>/10</span>
+                      </div>
+                      <div style={{ fontWeight: 700, marginTop: 2, color: statusTone(severityTone(diseaseRisk.today.severity)).color }}>
+                        {diseaseRisk.today.label}
+                      </div>
+                    </div>
+                    <div style={{ color: 'var(--text-dim)', fontSize: 12, textTransform: 'capitalize' }}>{diseaseRisk.today.trend}</div>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-dim)' }}>{diseaseRisk.today.explanation}</div>
+
+                  <div style={{ marginTop: 16 }}>
+                    {diseaseRisk.history.slice(-7).map((d, i, arr) => {
+                      const daysAgo = arr.length - 1 - i
+                      const label = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`
+                      return (
+                        <div key={d.date} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                          <div style={{ width: 78, fontSize: 12, color: 'var(--text-dim)', flexShrink: 0 }}>{label}</div>
+                          <div style={{ flex: 1, height: 8, background: 'var(--card-alt)', borderRadius: 999, overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                height: '100%',
+                                width: `${d.score * 10}%`,
+                                background: statusTone(severityTone(d.severity)).color,
+                                borderRadius: 999,
+                              }}
+                            />
+                          </div>
+                          <div style={{ width: 20, fontSize: 13, textAlign: 'right', flexShrink: 0 }}>{d.score}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
+                    Estimated from humidity and temperature trends, not a lab diagnosis
+                  </div>
+                </CardBody>
+              </Card>
+            </>
+          )}
 
           <SectionLabel icon="droplet">Recent Rainfall</SectionLabel>
           <Card>

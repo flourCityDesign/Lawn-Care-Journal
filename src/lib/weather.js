@@ -1,3 +1,5 @@
+import { parseLocalDate } from './date'
+
 export const SOIL_TEMP_DEPTH_NOTE = 'Soil temp measured at ~2.4" depth (Open-Meteo soil_temperature_6cm)'
 export const GERMINATION_THRESHOLD_F = 50
 
@@ -18,6 +20,42 @@ function dateKey(isoString) {
   return isoString.slice(0, 10)
 }
 
+function shiftDateKey(key, days) {
+  const d = parseLocalDate(key)
+  d.setDate(d.getDate() + days)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Average relative humidity from 9pm to 6am, keyed by the date the evening
+// falls on (e.g. 9pm Tuesday through 6am Wednesday is "Tuesday night").
+// Overnight humidity is the standard proxy for leaf wetness duration used
+// by turf disease models, since Open-Meteo doesn't expose leaf wetness.
+function computeOvernightRH(times, rhValues) {
+  const byNight = new Map()
+  times.forEach((t, i) => {
+    const rh = rhValues[i]
+    if (rh == null) return
+    const hour = Number(t.slice(11, 13))
+    const day = t.slice(0, 10)
+    if (hour >= 21) {
+      if (!byNight.has(day)) byNight.set(day, [])
+      byNight.get(day).push(rh)
+    } else if (hour < 6) {
+      const prevDay = shiftDateKey(day, -1)
+      if (!byNight.has(prevDay)) byNight.set(prevDay, [])
+      byNight.get(prevDay).push(rh)
+    }
+  })
+  const result = new Map()
+  byNight.forEach((values, day) => {
+    result.set(day, values.reduce((s, v) => s + v, 0) / values.length)
+  })
+  return result
+}
+
 export async function fetchWeather({ lat, lon }) {
   const params = new URLSearchParams({
     latitude: lat,
@@ -25,7 +63,7 @@ export async function fetchWeather({ lat, lon }) {
     current: 'temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code',
     daily:
       'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,weather_code',
-    hourly: 'soil_temperature_6cm',
+    hourly: 'soil_temperature_6cm,relative_humidity_2m',
     past_days: '7',
     forecast_days: '8',
     temperature_unit: 'fahrenheit',
@@ -62,6 +100,19 @@ export async function fetchWeather({ lat, lon }) {
   const todayIdx = data.daily.time.indexOf(todayKey)
   const precipChanceToday = todayIdx >= 0 ? data.daily.precipitation_probability_max[todayIdx] : 0
   const rainLast2DaysIn = rainHistory.slice(-2).reduce((sum, d) => sum + (d.amount || 0), 0)
+
+  // --- disease risk inputs: past days through today, with overnight RH ---
+  const overnightRHByNight = computeOvernightRH(data.hourly.time, data.hourly.relative_humidity_2m)
+  const dailyHistory = data.daily.time
+    .map((date, i) => ({
+      date,
+      high: data.daily.temperature_2m_max[i],
+      low: data.daily.temperature_2m_min[i],
+      precipSum: data.daily.precipitation_sum[i] ?? 0,
+      overnightRH: overnightRHByNight.get(date) ?? null,
+    }))
+    .filter((d) => d.date <= todayKey)
+    .slice(-10)
 
   // --- soil temperature (hourly -> daily means -> 5-day rolling avg) ---
   const soilHourly = data.hourly.soil_temperature_6cm
@@ -103,6 +154,7 @@ export async function fetchWeather({ lat, lon }) {
       precipChance: precipChanceToday,
     },
     daily,
+    dailyHistory,
     rainHistory,
     rainLast2DaysIn,
     rainWeekTotalIn: rainHistory.reduce((s, d) => s + (d.amount || 0), 0),

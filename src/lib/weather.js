@@ -87,7 +87,10 @@ export async function fetchWeather({ lat, lon }) {
     daily:
       'temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,weather_code',
     hourly: 'soil_temperature_6cm,relative_humidity_2m,temperature_2m',
-    past_days: '7',
+    // 45 past days keeps ~6 weeks of soil temperature for the extended
+    // history view; disease-risk and rainfall history are separately
+    // sliced down to their own shorter windows below.
+    past_days: '45',
     forecast_days: '8',
     temperature_unit: 'fahrenheit',
     wind_speed_unit: 'mph',
@@ -159,10 +162,10 @@ export async function fetchWeather({ lat, lon }) {
     .filter((d) => d.date <= todayKey)
     .sort((a, b) => (a.date < b.date ? -1 : 1))
 
-  const last5Complete = soilTempHistory.slice(-5)
-  const soilTemp5DayAvg =
-    last5Complete.length > 0
-      ? last5Complete.reduce((s, d) => s + d.avg, 0) / last5Complete.length
+  const last7Complete = soilTempHistory.slice(-7)
+  const soilTemp7DayAvg =
+    last7Complete.length > 0
+      ? last7Complete.reduce((s, d) => s + d.avg, 0) / last7Complete.length
       : null
 
   const last24 = soilHourly.slice(-24).filter((v) => v != null)
@@ -185,8 +188,8 @@ export async function fetchWeather({ lat, lon }) {
     rainHistory,
     rainLast2DaysIn,
     rainWeekTotalIn: rainHistory.reduce((s, d) => s + (d.amount || 0), 0),
-    soilTempHistory: soilTempHistory.slice(-14),
-    soilTemp5DayAvg,
+    soilTempHistory: soilTempHistory.slice(-45),
+    soilTemp7DayAvg,
     soilTempLast24hAvg,
   }
 }

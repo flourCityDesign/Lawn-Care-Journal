@@ -47,7 +47,7 @@ export default function Weather() {
     // A cache saved before a weatherCache field was added (e.g. dailyHistory
     // for Disease Risk) won't have it - treat that as stale too, so a new
     // feature shows up on next open instead of silently waiting out the hour.
-    const missingFields = weatherCache && !weatherCache.dailyHistory
+    const missingFields = weatherCache && (!weatherCache.dailyHistory || weatherCache.soilTemp7DayAvg === undefined)
     if (isStale || missingFields) {
       refresh()
     }
@@ -296,14 +296,16 @@ export default function Weather() {
             </>
           )}
 
-          <SectionLabel icon="thermometer">Soil Temperature</SectionLabel>
+          <SectionLabel icon="thermometer" action="Extended history" actionTo="/weather/soil-temp">
+            Soil Temperature
+          </SectionLabel>
           <Card>
             <CardBody>
               <div style={{ display: 'flex', gap: 24 }}>
                 <div>
-                  <div style={{ color: 'var(--text-dim)', fontSize: 12, textTransform: 'uppercase', fontWeight: 700 }}>5-Day Avg</div>
+                  <div style={{ color: 'var(--text-dim)', fontSize: 12, textTransform: 'uppercase', fontWeight: 700 }}>7-Day Avg</div>
                   <div style={{ fontSize: 26, fontWeight: 800, marginTop: 2 }}>
-                    {weatherCache.soilTemp5DayAvg != null ? `${Math.round(weatherCache.soilTemp5DayAvg)}°F` : '—'}
+                    {weatherCache.soilTemp7DayAvg != null ? `${Math.round(weatherCache.soilTemp7DayAvg)}°F` : '—'}
                   </div>
                 </div>
                 <div>
@@ -315,7 +317,7 @@ export default function Weather() {
               </div>
               <div style={{ marginTop: 16 }}>
                 <SoilTempChart
-                  data={weatherCache.soilTempHistory}
+                  data={weatherCache.soilTempHistory.slice(-7)}
                   thresholds={[
                     { value: SPRING_GERMINATION_THRESHOLD_F, label: '50° crabgrass', color: 'var(--accent-2)' },
                     { value: FALL_GERMINATION_THRESHOLD_F, label: '70° Poa annua', color: 'var(--danger)' },

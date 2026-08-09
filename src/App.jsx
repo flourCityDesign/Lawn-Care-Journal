@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import Home from './screens/Home'
 import Weather from './screens/Weather'
+import SoilTempHistory from './screens/SoilTempHistory'
 import Log from './screens/Log'
 import LogEntryForm from './screens/LogEntryForm'
 import LogEntryDetail from './screens/LogEntryDetail'
@@ -18,6 +19,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/weather" element={<Weather />} />
+        <Route path="/weather/soil-temp" element={<SoilTempHistory />} />
         <Route path="/log" element={<Log />} />
         {/* Both routes render LogEntryForm; without a per-path key React Router
             reuses the same instance across them and leaves stale form state

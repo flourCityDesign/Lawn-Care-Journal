@@ -213,6 +213,13 @@ export default function Weather() {
                       <span style={{ fontWeight: 700, color: 'var(--text)' }}>{Math.round(diseaseRisk.today.smithKernsPercent)}%</span>
                     </div>
                   )}
+                  {diseaseRisk.today.fidanzaE != null && (
+                    <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-dim)' }}>
+                      Brown patch index (Fidanza model):{' '}
+                      <span style={{ fontWeight: 700, color: 'var(--text)' }}>{diseaseRisk.today.fidanzaE.toFixed(1)}</span>{' '}
+                      {diseaseRisk.today.fidanzaE >= 6 ? '(above warning threshold of 6)' : '(below warning threshold of 6)'}
+                    </div>
+                  )}
 
                   <div style={{ marginTop: 16 }}>
                     {diseaseRisk.history.slice(-7).map((d, i, arr) => {

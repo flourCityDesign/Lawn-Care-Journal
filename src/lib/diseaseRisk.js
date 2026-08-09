@@ -1,20 +1,28 @@
 // Fungal disease risk score (1-10), derived entirely from weather data
 // already fetched for the Weather tab - no separate API call.
 //
-// The core of the score is the real, published Smith-Kerns Dollar Spot
-// Model (Smith & Kerns, 2018, PLOS ONE) - a logistic regression on 5-day
-// rolling averages of daily mean relative humidity and daily mean air
-// temperature, the same model Syngenta's GreenCast tool uses. It's only
-// valid for dollar spot's active temperature range (50-95°F); outside that
-// range (e.g. near-freezing snow mold territory) we fall back to a rough,
-// unvalidated heuristic, clearly separated from the real model below.
+// The base of the score is whichever of two published, peer-reviewed
+// models currently reads highest:
+//  - Smith-Kerns Dollar Spot Model (Smith & Kerns, 2018, PLOS ONE) - the
+//    same model Syngenta's GreenCast tool uses. A logistic regression on
+//    5-day rolling averages of daily mean RH and daily mean air temp,
+//    valid for dollar spot's active range (50-95°F).
+//  - Fidanza Brown Patch Warning Model (Fidanza, Dernoeden & Grybauskas,
+//    1996, Phytopathology 86:385-390). A same-day quadratic regression on
+//    that day's mean RH and minimum air temp; E >= 6 is the model's own
+//    published warning threshold.
+// Whichever model is both applicable and scoring higher determines the
+// score and the disease named in the label - a homeowner gets one number
+// to check, backed by whichever real risk is currently more pressing.
+// Outside both models' ranges (e.g. near-freezing snow mold territory) we
+// fall back to a rough, unvalidated heuristic, clearly separated below.
 //
 // A handful of extra factors are layered on top of that base, generalizing
-// it into an overall pressure score across multiple diseases: consecutive
-// high-humidity nights (compounding pressure), a wide day/night swing
-// (heavy dew even without rain), and recent rain (extends the wet-leaf
-// window). The rolling window means the score decays on its own once
-// conditions dry out, without needing an explicit "subtract" step.
+// it into an overall pressure score: consecutive high-humidity nights
+// (compounding pressure), a wide day/night swing (heavy dew even without
+// rain), and recent rain (extends the wet-leaf window). The rolling window
+// in Smith-Kerns means the score decays on its own once conditions dry
+// out, without needing an explicit "subtract" step.
 
 const HIGH_RISK_RH = 90
 const ROLLING_WINDOW = 5
@@ -23,6 +31,13 @@ const ROLLING_WINDOW = 5
 // spot isn't considered biologically active outside that range.
 const SMITH_KERNS_MIN_TEMP_F = 50
 const SMITH_KERNS_MAX_TEMP_F = 95
+
+// Fidanza's quadratic term makes E self-limiting at temperature extremes,
+// but we still bound it to the growing season to avoid extrapolating the
+// model into conditions it was never fit on.
+const FIDANZA_MIN_TEMP_F = 40
+const FIDANZA_MAX_TEMP_F = 95
+const FIDANZA_WARNING_THRESHOLD = 6
 
 function fahrenheitToCelsius(f) {
   return (f - 32) * (5 / 9)
@@ -37,6 +52,17 @@ export function smithKernsProbability(avgMeanRH, avgMeanTempF) {
   const logit = -11.4041 + 0.0894 * avgMeanRH + 0.1932 * avgMeanTempC
   const p = Math.exp(logit) / (1 + Math.exp(logit))
   return p * 100
+}
+
+// E2 = -21.5 + 0.15·RH + 1.4·T(°C) - 0.033·T(°C)² ; E >= 6 is a warning.
+// RH is that day's mean relative humidity, T is that day's minimum air
+// temp - unlike Smith-Kerns this isn't a rolling average, it's evaluated
+// fresh each day per the published model.
+export function fidanzaFavorabilityIndex(meanRH, minTempF) {
+  if (meanRH == null || minTempF == null) return null
+  if (minTempF < FIDANZA_MIN_TEMP_F || minTempF > FIDANZA_MAX_TEMP_F) return null
+  const minTempC = fahrenheitToCelsius(minTempF)
+  return -21.5 + 0.15 * meanRH + 1.4 * minTempC - 0.033 * minTempC * minTempC
 }
 
 // Fallback only used outside Smith-Kerns' valid range - NOT a validated
@@ -77,12 +103,56 @@ function scoreFromProbability(p) {
   return Math.min(10, 9 + ((p - 70) / 30) * 1) // 70-100% -> 9-10 (severe)
 }
 
-function basePointsFor({ avgMeanRH, avgMeanTempF, avgOvernightRH, avgLow }) {
+// Maps Fidanza's E onto the same 1-10 scale, anchored to its own published
+// warning threshold (E=6) landing at the same score (4) that Smith-Kerns'
+// 20% action threshold lands at. Unlike Smith-Kerns' probability (which can
+// approach 100% in extreme conditions), E's quadratic temperature term
+// gives it a hard mathematical ceiling around 8.3 even at 100% humidity and
+// the exact optimal temperature - so this ramps much steeper than the
+// probability scale, or brown patch could never plausibly outrank dollar
+// spot even when it's the more specifically-favored disease.
+function scoreFromE(e) {
+  if (e <= 0) return 1
+  if (e < FIDANZA_WARNING_THRESHOLD) return 1 + (e / FIDANZA_WARNING_THRESHOLD) * 3 // 0-6 -> 1-4
+  if (e < 7) return 4 + (e - 6) * 3 // 6-7 -> 4-7 (just past warning)
+  return Math.min(10, 7 + Math.max(0, (e - 7) / 1.3) * 3) // 7-8.3 -> 7-10 (near E's realistic ceiling)
+}
+
+// Runs both validated models. Smith-Kerns (2018, logistic) is a structurally
+// more sensitive instrument than Fidanza (1996, quadratic) - at the same
+// weather, Smith-Kerns routinely reads higher, so a plain "take whichever
+// number is bigger" comparison would mean brown patch could almost never
+// surface even when its own model has crossed its own published warning
+// threshold. These two scores were never designed to be compared head to
+// head anyway - they're independent warning systems, not directly
+// comparable percentages. So instead: name every disease whose own model
+// has independently crossed into real risk (score >= 4) - both, if both
+// have - and use the higher score as the single headline number.
+function basePointsFor({ avgMeanRH, avgMeanTempF, meanRHToday, minTempToday, avgOvernightRH, avgLow }) {
   const smithKernsPercent = smithKernsProbability(avgMeanRH, avgMeanTempF)
-  if (smithKernsPercent != null) {
-    return { points: scoreFromProbability(smithKernsPercent), smithKernsPercent }
+  const fidanzaE = fidanzaFavorabilityIndex(meanRHToday, minTempToday)
+  const smithKernsPoints = smithKernsPercent != null ? scoreFromProbability(smithKernsPercent) : null
+  const fidanzaPoints = fidanzaE != null ? scoreFromE(fidanzaE) : null
+
+  if (smithKernsPoints == null && fidanzaPoints == null) {
+    return {
+      points: fallbackHumidityPoints(avgOvernightRH) + fallbackColdBonus(avgLow),
+      smithKernsPercent: null,
+      fidanzaE: null,
+      diseasesInPlay: [],
+    }
   }
-  return { points: fallbackHumidityPoints(avgOvernightRH) + fallbackColdBonus(avgLow), smithKernsPercent: null }
+
+  const diseasesInPlay = []
+  if (smithKernsPoints != null && smithKernsPoints >= 4) diseasesInPlay.push('Dollar spot')
+  if (fidanzaPoints != null && fidanzaPoints >= 4) diseasesInPlay.push('Brown patch')
+
+  return {
+    points: Math.max(smithKernsPoints ?? -Infinity, fidanzaPoints ?? -Infinity),
+    smithKernsPercent,
+    fidanzaE,
+    diseasesInPlay,
+  }
 }
 
 function severityFor(score) {
@@ -100,20 +170,20 @@ export function severityTone(severity) {
   return 'bad'
 }
 
-function diseaseLabel(severity, dateKeyStr, avgLow, smithKernsPercent) {
+function diseaseLabel(severity, dateKeyStr, avgLow, diseasesInPlay) {
   if (severity === 'low') return 'Low risk'
   const severityWord = severity === 'moderate' ? 'Moderate' : severity === 'high' ? 'High' : 'Severe'
 
-  const month = Number(dateKeyStr.slice(5, 7))
-  let disease = null
-  if (smithKernsPercent != null) {
-    // Within Smith-Kerns' validated range - this score is specifically a
-    // dollar spot signal by definition of the model.
-    disease = 'Dollar spot'
-  } else if ((month === 12 || month <= 3) && avgLow != null && avgLow <= 40) {
-    disease = 'Snow mold'
+  let diseaseText = diseasesInPlay && diseasesInPlay.length > 0 ? diseasesInPlay.join(' & ') : null
+  if (!diseaseText) {
+    // Neither validated model applies - only the unvalidated cold-weather
+    // fallback is in play.
+    const month = Number(dateKeyStr.slice(5, 7))
+    if ((month === 12 || month <= 3) && avgLow != null && avgLow <= 40) {
+      diseaseText = 'Snow mold'
+    }
   }
-  return disease ? `${severityWord} — ${disease} conditions` : `${severityWord} — Elevated humidity pressure`
+  return diseaseText ? `${severityWord} — ${diseaseText} conditions` : `${severityWord} — Elevated humidity pressure`
 }
 
 function explanationFor(consecutiveHighRiskDays, avgOvernightRH, severity) {
@@ -172,11 +242,18 @@ export function computeDiseaseRiskHistory(dailyHistory, dailyForecast = []) {
     const swingBonus = daySwing >= 20 ? 0.5 : 0
     const rainBonus = (day.precipSum || 0) > 0.1 ? 0.5 : 0
 
-    const { points: basePoints, smithKernsPercent } = basePointsFor({ avgMeanRH, avgMeanTempF, avgOvernightRH, avgLow })
+    const { points: basePoints, smithKernsPercent, fidanzaE, diseasesInPlay } = basePointsFor({
+      avgMeanRH,
+      avgMeanTempF,
+      meanRHToday: day.meanRH,
+      minTempToday: day.low,
+      avgOvernightRH,
+      avgLow,
+    })
     const raw = basePoints + consecutiveBonus + swingBonus + rainBonus
     const score = Math.min(10, Math.max(1, Math.round(raw)))
     const severity = severityFor(score)
-    const label = diseaseLabel(severity, day.date, avgLow, smithKernsPercent)
+    const label = diseaseLabel(severity, day.date, avgLow, diseasesInPlay)
 
     return {
       date: day.date,
@@ -188,6 +265,7 @@ export function computeDiseaseRiskHistory(dailyHistory, dailyForecast = []) {
       avgLow,
       avgHigh,
       smithKernsPercent,
+      fidanzaE,
       isForecast: i >= dailyHistory.length,
     }
   })

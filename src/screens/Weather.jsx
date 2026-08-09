@@ -335,14 +335,14 @@ export default function Weather() {
                 <div style={{ width: 44, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                   {parseLocalDate(d.date).toLocaleDateString(undefined, { weekday: 'short' })}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                     {weatherCodeLabel(d.weatherCode)}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-dim)', fontSize: 12, marginTop: 2 }}>
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-dim)', fontSize: 12, flexShrink: 0, whiteSpace: 'nowrap' }}>
                     <Icon name="droplet" size={13} /> {Math.round(d.precipChance)}%
-                    {d.precipSum > 0 && <span style={{ marginLeft: 2 }}>({d.precipSum.toFixed(2)}")</span>}
-                  </div>
+                    {d.precipSum > 0 && <span>({d.precipSum.toFixed(2)}")</span>}
+                  </span>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                   {Math.round(d.high)}° <span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>{Math.round(d.low)}°</span>

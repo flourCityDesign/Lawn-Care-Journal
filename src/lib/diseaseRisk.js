@@ -86,35 +86,31 @@ function fallbackColdBonus(avgLow) {
   return 0
 }
 
-// Maps the real Smith-Kerns probability onto our 1-10 scale, anchored to
-// real-world reference points rather than a flat percentage: 20% is the
-// model's own field-validated "effective suppression" action threshold, and
-// ~40%/~52% roughly track GreenCast's own elevated/high bands. A flat
-// linear scale (p/100 x 10) would bury a genuinely actionable 40-50%
-// reading under our "moderate" band - this keeps the score's severity
-// words meaning the same thing a turf manager would expect from the
-// probability itself.
+// Maps the real Smith-Kerns probability onto our 1-10 scale, anchored so the
+// model's own field-validated action threshold (20% - "the point where
+// preventive management becomes worth considering") lands at the middle of
+// the scale (5), not near the bottom. Once you're meaningfully past the
+// point a superintendent would already be spraying, the score should read
+// as urgent, not "moderate" - so it escalates faster above 20% than below
+// it: roughly 2x the threshold (40%) reads high (7), 3x (60%+) reads severe.
 function scoreFromProbability(p) {
   if (p <= 0) return 1
-  if (p < 20) return 1 + (p / 20) * 3 // 0-20%  -> 1-4 (low)
-  if (p < 40) return 4 + ((p - 20) / 20) * 2 // 20-40% -> 4-6 (moderate)
-  if (p < 52) return 6 + ((p - 40) / 12) * 1 // 40-52% -> 6-7 (moderate/high)
-  if (p < 70) return 7 + ((p - 52) / 18) * 2 // 52-70% -> 7-9 (high)
-  return Math.min(10, 9 + ((p - 70) / 30) * 1) // 70-100% -> 9-10 (severe)
+  if (p < 20) return 1 + (p / 20) * 4 // 0-20%  -> 1-5 (approaching threshold)
+  if (p < 40) return 5 + ((p - 20) / 20) * 2 // 20-40% -> 5-7 (past threshold)
+  if (p < 60) return 7 + ((p - 40) / 20) * 2 // 40-60% -> 7-9 (well past threshold)
+  return Math.min(10, 9 + Math.max(0, (p - 60) / 40)) // 60-100% -> 9-10 (severe)
 }
 
-// Maps Fidanza's E onto the same 1-10 scale, anchored to its own published
-// warning threshold (E=6) landing at the same score (4) that Smith-Kerns'
-// 20% action threshold lands at. Unlike Smith-Kerns' probability (which can
-// approach 100% in extreme conditions), E's quadratic temperature term
-// gives it a hard mathematical ceiling around 8.3 even at 100% humidity and
-// the exact optimal temperature - so this ramps much steeper than the
-// probability scale, or brown patch could never plausibly outrank dollar
-// spot even when it's the more specifically-favored disease.
+// Maps Fidanza's E onto the same 1-10 scale with the same anchor logic: its
+// own published warning threshold (E=6) lands at 5, not near the bottom.
+// E's quadratic temperature term gives it a hard mathematical ceiling around
+// 8.3 even at 100% humidity and the exact optimal temperature, so the
+// escalation above threshold is compressed into a much smaller absolute
+// range than the probability scale's.
 function scoreFromE(e) {
   if (e <= 0) return 1
-  if (e < FIDANZA_WARNING_THRESHOLD) return 1 + (e / FIDANZA_WARNING_THRESHOLD) * 3 // 0-6 -> 1-4
-  if (e < 7) return 4 + (e - 6) * 3 // 6-7 -> 4-7 (just past warning)
+  if (e < FIDANZA_WARNING_THRESHOLD) return 1 + (e / FIDANZA_WARNING_THRESHOLD) * 4 // 0-6 -> 1-5
+  if (e < 7) return 5 + (e - 6) * 2 // 6-7 -> 5-7 (just past warning)
   return Math.min(10, 7 + Math.max(0, (e - 7) / 1.3) * 3) // 7-8.3 -> 7-10 (near E's realistic ceiling)
 }
 
@@ -126,8 +122,9 @@ function scoreFromE(e) {
 // threshold. These two scores were never designed to be compared head to
 // head anyway - they're independent warning systems, not directly
 // comparable percentages. So instead: name every disease whose own model
-// has independently crossed into real risk (score >= 4) - both, if both
-// have - and use the higher score as the single headline number.
+// has independently crossed its own real action/warning threshold
+// (score >= 5, per the anchor above) - both, if both have - and use the
+// higher score as the single headline number.
 function basePointsFor({ avgMeanRH, avgMeanTempF, meanRHToday, minTempToday, avgOvernightRH, avgLow }) {
   const smithKernsPercent = smithKernsProbability(avgMeanRH, avgMeanTempF)
   const fidanzaE = fidanzaFavorabilityIndex(meanRHToday, minTempToday)
@@ -144,8 +141,8 @@ function basePointsFor({ avgMeanRH, avgMeanTempF, meanRHToday, minTempToday, avg
   }
 
   const diseasesInPlay = []
-  if (smithKernsPoints != null && smithKernsPoints >= 4) diseasesInPlay.push('Dollar spot')
-  if (fidanzaPoints != null && fidanzaPoints >= 4) diseasesInPlay.push('Brown patch')
+  if (smithKernsPoints != null && smithKernsPoints >= 5) diseasesInPlay.push('Dollar spot')
+  if (fidanzaPoints != null && fidanzaPoints >= 5) diseasesInPlay.push('Brown patch')
 
   return {
     points: Math.max(smithKernsPoints ?? -Infinity, fidanzaPoints ?? -Infinity),

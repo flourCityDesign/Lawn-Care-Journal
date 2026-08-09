@@ -335,9 +335,14 @@ export default function Weather() {
                 <div style={{ width: 44, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                   {parseLocalDate(d.date).toLocaleDateString(undefined, { weekday: 'short' })}
                 </div>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-dim)', fontSize: 12 }}>
-                  <Icon name="droplet" size={13} /> {Math.round(d.precipChance)}%
-                  <Icon name="wind" size={13} style={{ marginLeft: 8 }} /> {Math.round(d.wind)} mph
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {weatherCodeLabel(d.weatherCode)}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-dim)', fontSize: 12, marginTop: 2 }}>
+                    <Icon name="droplet" size={13} /> {Math.round(d.precipChance)}%
+                    {d.precipSum > 0 && <span style={{ marginLeft: 2 }}>({d.precipSum.toFixed(2)}")</span>}
+                  </div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                   {Math.round(d.high)}° <span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>{Math.round(d.low)}°</span>

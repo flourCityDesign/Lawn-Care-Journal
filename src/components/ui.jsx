@@ -158,7 +158,7 @@ export function logMetaItems(app) {
     const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
     app.products.forEach((p) => {
       const parts = []
-      if (p.rate) parts.push(`${p.rate} ${unit}/1k sqft`)
+      if (p.amount) parts.push(`${p.amount} ${unit}`)
       if (p.nPercent) parts.push(`${p.nPercent}% N`)
       items.push({ icon: 'flask', text: p.name || 'Product', sub: parts.join(' · ') || null })
     })

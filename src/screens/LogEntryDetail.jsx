@@ -90,7 +90,7 @@ export default function LogEntryDetail() {
             {app.products.map((p, i) => {
               const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
               const detailParts = [
-                p.rate ? `${p.rate} ${unit} / 1,000 sqft` : null,
+                p.amount ? `${p.amount} ${unit}` : null,
                 p.nPercent ? `${p.nPercent}% N` : null,
                 p.spreaderSetting ? `Spreader: ${p.spreaderSetting}` : null,
                 p.ozPerGallon ? `${p.ozPerGallon} oz/gal` : null,

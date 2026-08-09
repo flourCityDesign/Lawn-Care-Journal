@@ -26,33 +26,38 @@ export function actualNLbs(app) {
   return amount * (nPercent / 100)
 }
 
-// A product's rate (lbs/1,000 sqft for granular, oz/1,000 sqft for liquid)
-// converted to lbs/1,000 sqft of product, for N-content math.
-function productLbsPer1000(product, productType) {
-  const rate = Number(product.rate) || 0
-  return productType === 'liquid' ? rate / 16 : rate
+// A product's total amount applied (lbs for granular, oz for liquid),
+// converted to lbs of product, for N-content math.
+function productTotalLbs(product, productType) {
+  const amount = Number(product.amount) || 0
+  return productType === 'liquid' ? amount / 16 : amount
 }
 
-// N rate (lbs N / 1,000 sqft) a multi-product entry contributes, directly
-// from each product's rate x N% - no area math needed since rate is
-// already expressed as a density. Returns null for entries that don't use
-// the products model (older single-product entries), so callers can fall
-// back to the legacy amount-applied calculation.
-export function entryNRatePer1000(app) {
+// N rate (lbs N / 1,000 sqft) a multi-product entry contributes. Each
+// product's total amount applied x N% gives total lbs of actual N, which is
+// then spread over however much area the entry covered - same
+// amount-applied-over-an-area idea as the legacy single-product model, just
+// summed across products. Returns null for entries that don't use the
+// products model (older single-product entries), so callers can fall back
+// to the legacy calculation.
+export function entryNRatePer1000(app, zones) {
   if (!N_TRACKED_CATEGORIES.includes(app.category) || !Array.isArray(app.products)) return null
-  return app.products.reduce((sum, p) => {
+  const coverageSqft = appCoverageSqft(app, zones)
+  if (coverageSqft <= 0) return 0
+  const totalLbsN = app.products.reduce((sum, p) => {
     const nPercent = Number(p.nPercent) || 0
     if (nPercent <= 0) return sum
-    return sum + productLbsPer1000(p, app.productType) * (nPercent / 100)
+    return sum + productTotalLbs(p, app.productType) * (nPercent / 100)
   }, 0)
+  return totalLbsN / (coverageSqft / 1000)
 }
 
 // Unified N rate (lbs N / 1,000 sqft) this application contributes to each
-// zone it covers - works for both product-based entries (rate is already a
-// density) and legacy entries (a total amount applied, back-calculated into
-// a density using how much area the entry covered).
+// zone it covers - works for both product-based entries and legacy
+// entries, both a total amount applied back-calculated into a density
+// using how much area the entry covered.
 export function appNRatePer1000(app, zones) {
-  const direct = entryNRatePer1000(app)
+  const direct = entryNRatePer1000(app, zones)
   if (direct != null) return direct
   const coverageSqft = appCoverageSqft(app, zones)
   return coverageSqft > 0 ? actualNLbs(app) / (coverageSqft / 1000) : 0

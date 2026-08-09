@@ -5,7 +5,6 @@ import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../compone
 import { CATEGORIES, TREATMENT_CATEGORIES, N_TRACKED_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
-import { appCoverageSqft } from '../lib/nitrogen'
 import { parseLocalDate } from '../lib/date'
 import Icon from '../components/Icon'
 
@@ -23,7 +22,7 @@ function formatCutHeight(n) {
 }
 
 function emptyProduct() {
-  return { name: '', rate: '', nPercent: '', spreaderSetting: '', ozPerGallon: '' }
+  return { name: '', amount: '', nPercent: '', spreaderSetting: '', ozPerGallon: '' }
 }
 
 export default function LogEntryForm() {
@@ -55,20 +54,13 @@ export default function LogEntryForm() {
   const [products, setProducts] = useState(() => {
     if (source?.products?.length) return source.products
     if (source?.productName) {
-      // The old rate field was freeform text describing a total amount
-      // applied (e.g. "10 lbs"), not a lbs/1,000 sqft density like the new
-      // rate field expects - carrying it over as-is would silently zero out
-      // (or misrepresent) this entry's N contribution. Only Fertilizer
-      // entries recorded a clean numeric amountLbs we can convert from;
-      // other legacy categories just start with rate blank for re-entry.
-      const legacyRate =
-        source.category === 'Fertilizer' && source.amountLbs
-          ? (() => {
-              const coverageSqft = appCoverageSqft(source, zones)
-              return coverageSqft > 0 ? String(+(Number(source.amountLbs) / (coverageSqft / 1000)).toFixed(2)) : ''
-            })()
-          : ''
-      return [{ ...emptyProduct(), name: source.productName, rate: legacyRate, nPercent: source.nPercent ?? '' }]
+      // Older entries recorded amountLbs directly on Fertilizer entries -
+      // that's the same "total amount applied" a product row wants, so it
+      // carries over as-is. Other legacy categories only ever had a
+      // freeform rate string (e.g. "32 oz/5000 sqft"), which isn't a clean
+      // number to carry over, so those just start blank for re-entry.
+      const amount = source.category === 'Fertilizer' && source.amountLbs ? String(source.amountLbs) : ''
+      return [{ ...emptyProduct(), name: source.productName, amount, nPercent: source.nPercent ?? '' }]
     }
     return [emptyProduct()]
   })
@@ -161,10 +153,10 @@ export default function LogEntryForm() {
         ? {
             productType,
             products: products
-              .filter((p) => p.name.trim() || p.rate)
+              .filter((p) => p.name.trim() || p.amount)
               .map((p) => ({
                 name: p.name.trim(),
-                rate: p.rate,
+                amount: p.amount,
                 nPercent: showNPercent && p.nPercent !== '' ? Number(p.nPercent) : null,
                 spreaderSetting: productType === 'granular' ? p.spreaderSetting.trim() : '',
                 ozPerGallon: productType === 'liquid' ? p.ozPerGallon.trim() : '',
@@ -315,11 +307,11 @@ export default function LogEntryForm() {
                         <input
                           type="text"
                           inputMode="decimal"
-                          placeholder="Rate"
-                          value={p.rate}
-                          onChange={(e) => updateProduct(i, { rate: e.target.value })}
+                          placeholder="Amount applied"
+                          value={p.amount}
+                          onChange={(e) => updateProduct(i, { amount: e.target.value })}
                         />
-                        <span className="icon-field__suffix">{productType === 'liquid' ? 'oz / 1k sqft' : 'lbs / 1k sqft'}</span>
+                        <span className="icon-field__suffix">{productType === 'liquid' ? 'oz' : 'lbs'}</span>
                       </div>
                       {showNPercent && (
                         <div className="icon-field">

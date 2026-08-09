@@ -1,7 +1,11 @@
 import { parseLocalDate } from './date'
 
 export const SOIL_TEMP_DEPTH_NOTE = 'Soil temp measured at ~2.4" depth (Open-Meteo soil_temperature_6cm)'
-export const GERMINATION_THRESHOLD_F = 50
+// Spring: crabgrass and other summer annual weeds germinate as soil warms
+// through ~50°F. Fall: Poa annua and other winter annual weeds germinate as
+// soil cools back down through ~70°F.
+export const SPRING_GERMINATION_THRESHOLD_F = 50
+export const FALL_GERMINATION_THRESHOLD_F = 70
 
 export async function geocodeZip(zip) {
   const res = await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`)

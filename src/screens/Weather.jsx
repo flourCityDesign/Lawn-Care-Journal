@@ -4,7 +4,7 @@ import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, SectionLabel, statusTone } from '../components/ui'
 import Icon from '../components/Icon'
 import SoilTempChart from '../components/SoilTempChart'
-import { fetchWeather, weatherCodeLabel, SOIL_TEMP_DEPTH_NOTE, GERMINATION_THRESHOLD_F } from '../lib/weather'
+import { fetchWeather, weatherCodeLabel, SOIL_TEMP_DEPTH_NOTE, SPRING_GERMINATION_THRESHOLD_F, FALL_GERMINATION_THRESHOLD_F } from '../lib/weather'
 import { computeMowScore } from '../lib/mow'
 import { computeDiseaseRiskHistory, severityTone } from '../lib/diseaseRisk'
 import { parseLocalDate } from '../lib/date'
@@ -314,7 +314,13 @@ export default function Weather() {
                 </div>
               </div>
               <div style={{ marginTop: 16 }}>
-                <SoilTempChart data={weatherCache.soilTempHistory} threshold={GERMINATION_THRESHOLD_F} />
+                <SoilTempChart
+                  data={weatherCache.soilTempHistory}
+                  thresholds={[
+                    { value: SPRING_GERMINATION_THRESHOLD_F, label: '50° crabgrass', color: 'var(--accent-2)' },
+                    { value: FALL_GERMINATION_THRESHOLD_F, label: '70° Poa annua', color: 'var(--danger)' },
+                  ]}
+                />
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 8 }}>{SOIL_TEMP_DEPTH_NOTE}</div>
             </CardBody>

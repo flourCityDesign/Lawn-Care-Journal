@@ -145,6 +145,11 @@ export default function LogEntryForm() {
     }
     if (requireNPK) {
       const keptProducts = products.filter((p) => p.name.trim() || p.amount)
+      const missingAmount = keptProducts.some((p) => !p.amount)
+      if (missingAmount) {
+        setError('Enter the amount applied for each fertilizer product.')
+        return
+      }
       const missingNPK = keptProducts.some((p) => p.nPercent === '' || p.pPercent === '' || p.kPercent === '')
       if (missingNPK) {
         setError('Enter N, P, and K percentages for each fertilizer product.')

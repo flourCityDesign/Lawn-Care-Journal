@@ -12,30 +12,6 @@ const CUT_HEIGHT_STEP = 0.25
 const CUT_HEIGHT_MIN = 0.25
 const DEFAULT_CUT_HEIGHT = 3
 
-const hiddenFileInputStyle = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-}
-
-const photoAddBoxStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 8,
-  padding: '24px 12px',
-  border: '2px dashed var(--card-border)',
-  borderRadius: 14,
-  color: 'var(--text-dim)',
-  cursor: 'pointer',
-  textTransform: 'none',
-  letterSpacing: 'normal',
-  fontWeight: 500,
-}
-
 function parseCutHeight(str) {
   const n = parseFloat(str)
   return Number.isFinite(n) ? n : null
@@ -468,20 +444,42 @@ export default function LogEntryForm() {
             </div>
 
             <div className="field">
-              <label>Photos</label>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <input id="photo-camera" type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoChange} style={hiddenFileInputStyle} />
-                <label htmlFor="photo-camera" style={{ ...photoAddBoxStyle, flex: 1 }}>
-                  <Icon name="camera" size={26} />
-                  <span style={{ fontSize: 14 }}>Take Photo</span>
-                </label>
-
-                <input id="photo-library" type="file" accept="image/*" multiple onChange={handlePhotoChange} style={hiddenFileInputStyle} />
-                <label htmlFor="photo-library" style={{ ...photoAddBoxStyle, flex: 1 }}>
-                  <Icon name="image" size={26} />
-                  <span style={{ fontSize: 14 }}>Photo Library</span>
-                </label>
-              </div>
+              <label htmlFor="photo">Photos</label>
+              <input
+                id="photo"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoChange}
+                style={{
+                  position: 'absolute',
+                  width: 1,
+                  height: 1,
+                  overflow: 'hidden',
+                  clip: 'rect(0 0 0 0)',
+                }}
+              />
+              <label
+                htmlFor="photo"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  padding: '32px 16px',
+                  border: '2px dashed var(--card-border)',
+                  borderRadius: 14,
+                  color: 'var(--text-dim)',
+                  cursor: 'pointer',
+                  textTransform: 'none',
+                  letterSpacing: 'normal',
+                  fontWeight: 500,
+                }}
+              >
+                <Icon name="camera" size={28} />
+                <span style={{ fontSize: 15 }}>Add Photo</span>
+              </label>
               {uploading && <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 6 }}>Processing photo...</div>}
               {existingPhotos.length > 0 && (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>

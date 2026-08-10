@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
-import { CATEGORIES, TREATMENT_CATEGORIES, N_TRACKED_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
+import { CATEGORIES, TREATMENT_CATEGORIES, N_TRACKED_CATEGORIES, NPK_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { parseLocalDate } from '../lib/date'
@@ -22,7 +22,7 @@ function formatCutHeight(n) {
 }
 
 function emptyProduct() {
-  return { name: '', amount: '', nPercent: '', spreaderSetting: '', ozPerGallon: '' }
+  return { name: '', amount: '', nPercent: '', pPercent: '', kPercent: '', spreaderSetting: '', ozPerGallon: '' }
 }
 
 export default function LogEntryForm() {
@@ -52,7 +52,7 @@ export default function LogEntryForm() {
   const [cutHeight, setCutHeight] = useState(initialCutHeight)
   const [productType, setProductType] = useState(source?.productType ?? 'granular')
   const [products, setProducts] = useState(() => {
-    if (source?.products?.length) return source.products
+    if (source?.products?.length) return source.products.map((p) => ({ ...emptyProduct(), ...p }))
     if (source?.productName) {
       // Older entries recorded amountLbs directly on Fertilizer entries -
       // that's the same "total amount applied" a product row wants, so it
@@ -72,7 +72,8 @@ export default function LogEntryForm() {
 
   const isMow = category === 'Mow'
   const isTreatment = TREATMENT_CATEGORIES.includes(category)
-  const showNPercent = N_TRACKED_CATEGORIES.includes(category)
+  const showFullNPK = NPK_CATEGORIES.includes(category)
+  const showNPercent = !showFullNPK && N_TRACKED_CATEGORIES.includes(category)
   const isBentgrass = category === BENTGRASS_CATEGORY
 
   const productSuggestions = useMemo(() => productNameHistory(category), [productNameHistory, category])
@@ -142,6 +143,14 @@ export default function LogEntryForm() {
       setError('Pick at least one area treated.')
       return
     }
+    if (showFullNPK) {
+      const keptProducts = products.filter((p) => p.name.trim() || p.amount)
+      const missingNPK = keptProducts.some((p) => p.nPercent === '' || p.pPercent === '' || p.kPercent === '')
+      if (missingNPK) {
+        setError('Enter N, P, and K percentages for each fertilizer product.')
+        return
+      }
+    }
     const payload = {
       date,
       category,
@@ -157,7 +166,9 @@ export default function LogEntryForm() {
               .map((p) => ({
                 name: p.name.trim(),
                 amount: p.amount,
-                nPercent: showNPercent && p.nPercent !== '' ? Number(p.nPercent) : null,
+                nPercent: (showFullNPK || showNPercent) && p.nPercent !== '' ? Number(p.nPercent) : null,
+                pPercent: showFullNPK && p.pPercent !== '' ? Number(p.pPercent) : null,
+                kPercent: showFullNPK && p.kPercent !== '' ? Number(p.kPercent) : null,
                 spreaderSetting: productType === 'granular' ? p.spreaderSetting.trim() : '',
                 ozPerGallon: productType === 'liquid' ? p.ozPerGallon.trim() : '',
               })),
@@ -313,7 +324,7 @@ export default function LogEntryForm() {
                         />
                         <span className="icon-field__suffix">{productType === 'liquid' ? 'oz' : 'lbs'}</span>
                       </div>
-                      {showNPercent && (
+                      {showFullNPK ? (
                         <div className="icon-field">
                           <Icon name="leaf" size={16} className="icon-field__icon" />
                           <input
@@ -321,11 +332,44 @@ export default function LogEntryForm() {
                             inputMode="decimal"
                             min="0"
                             max="100"
-                            placeholder="N% (optional)"
+                            placeholder="N%"
                             value={p.nPercent}
                             onChange={(e) => updateProduct(i, { nPercent: e.target.value })}
                           />
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            max="100"
+                            placeholder="P%"
+                            value={p.pPercent}
+                            onChange={(e) => updateProduct(i, { pPercent: e.target.value })}
+                          />
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            max="100"
+                            placeholder="K%"
+                            value={p.kPercent}
+                            onChange={(e) => updateProduct(i, { kPercent: e.target.value })}
+                          />
                         </div>
+                      ) : (
+                        showNPercent && (
+                          <div className="icon-field">
+                            <Icon name="leaf" size={16} className="icon-field__icon" />
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              max="100"
+                              placeholder="N% (optional)"
+                              value={p.nPercent}
+                              onChange={(e) => updateProduct(i, { nPercent: e.target.value })}
+                            />
+                          </div>
+                        )
                       )}
                       {productType === 'granular' ? (
                         <div className="icon-field">

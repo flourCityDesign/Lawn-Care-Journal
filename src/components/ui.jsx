@@ -159,7 +159,11 @@ export function logMetaItems(app) {
     app.products.forEach((p) => {
       const parts = []
       if (p.amount) parts.push(`${p.amount} ${unit}`)
-      if (p.nPercent) parts.push(`${p.nPercent}% N`)
+      if (app.category === 'Fertilizer' && (p.nPercent || p.pPercent || p.kPercent)) {
+        parts.push(`${p.nPercent || 0}-${p.pPercent || 0}-${p.kPercent || 0}`)
+      } else if (p.nPercent) {
+        parts.push(`${p.nPercent}% N`)
+      }
       items.push({ icon: 'flask', text: p.name || 'Product', sub: parts.join(' · ') || null })
     })
   } else if (app.productName) {

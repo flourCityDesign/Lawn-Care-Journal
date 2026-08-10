@@ -92,9 +92,10 @@ export default function LogEntryDetail() {
             </Row>
             {app.products.map((p, i) => {
               const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
+              const npk = app.category === 'Fertilizer' && (p.nPercent || p.pPercent || p.kPercent)
               const detailParts = [
                 p.amount ? `${p.amount} ${unit}` : null,
-                p.nPercent ? `${p.nPercent}% N` : null,
+                npk ? `${p.nPercent || 0}-${p.pPercent || 0}-${p.kPercent || 0} (N-P-K)` : p.nPercent ? `${p.nPercent}% N` : null,
                 p.spreaderSetting ? `Spreader: ${p.spreaderSetting}` : null,
                 p.ozPerGallon ? `${p.ozPerGallon} oz/gal` : null,
               ].filter(Boolean)

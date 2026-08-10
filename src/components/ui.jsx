@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Icon from './Icon'
 import { parseLocalDate } from '../lib/date'
+import { NPK_CATEGORIES } from '../lib/constants'
 import './ui.css'
 
 export function Page({ children }) {
@@ -159,7 +160,7 @@ export function logMetaItems(app) {
     app.products.forEach((p) => {
       const parts = []
       if (p.amount) parts.push(`${p.amount} ${unit}`)
-      if (app.category === 'Fertilizer' && (p.nPercent || p.pPercent || p.kPercent)) {
+      if (NPK_CATEGORIES.includes(app.category) && (p.nPercent || p.pPercent || p.kPercent)) {
         parts.push(`${p.nPercent || 0}-${p.pPercent || 0}-${p.kPercent || 0}`)
       } else if (p.nPercent) {
         parts.push(`${p.nPercent}% N`)

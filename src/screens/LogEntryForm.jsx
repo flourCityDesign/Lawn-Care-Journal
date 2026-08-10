@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
-import { CATEGORIES, TREATMENT_CATEGORIES, N_TRACKED_CATEGORIES, NPK_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
+import { CATEGORIES, TREATMENT_CATEGORIES, NPK_CATEGORIES, NPK_REQUIRED_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
 import { bentgrassStatus } from '../lib/bentgrass'
 import { parseLocalDate } from '../lib/date'
@@ -72,8 +72,8 @@ export default function LogEntryForm() {
 
   const isMow = category === 'Mow'
   const isTreatment = TREATMENT_CATEGORIES.includes(category)
-  const showFullNPK = NPK_CATEGORIES.includes(category)
-  const showNPercent = !showFullNPK && N_TRACKED_CATEGORIES.includes(category)
+  const showNPK = NPK_CATEGORIES.includes(category)
+  const requireNPK = NPK_REQUIRED_CATEGORIES.includes(category)
   const isBentgrass = category === BENTGRASS_CATEGORY
 
   const productSuggestions = useMemo(() => productNameHistory(category), [productNameHistory, category])
@@ -143,7 +143,7 @@ export default function LogEntryForm() {
       setError('Pick at least one area treated.')
       return
     }
-    if (showFullNPK) {
+    if (requireNPK) {
       const keptProducts = products.filter((p) => p.name.trim() || p.amount)
       const missingNPK = keptProducts.some((p) => p.nPercent === '' || p.pPercent === '' || p.kPercent === '')
       if (missingNPK) {
@@ -166,9 +166,9 @@ export default function LogEntryForm() {
               .map((p) => ({
                 name: p.name.trim(),
                 amount: p.amount,
-                nPercent: (showFullNPK || showNPercent) && p.nPercent !== '' ? Number(p.nPercent) : null,
-                pPercent: showFullNPK && p.pPercent !== '' ? Number(p.pPercent) : null,
-                kPercent: showFullNPK && p.kPercent !== '' ? Number(p.kPercent) : null,
+                nPercent: showNPK && p.nPercent !== '' ? Number(p.nPercent) : null,
+                pPercent: showNPK && p.pPercent !== '' ? Number(p.pPercent) : null,
+                kPercent: showNPK && p.kPercent !== '' ? Number(p.kPercent) : null,
                 spreaderSetting: productType === 'granular' ? p.spreaderSetting.trim() : '',
                 ozPerGallon: productType === 'liquid' ? p.ozPerGallon.trim() : '',
               })),
@@ -324,39 +324,8 @@ export default function LogEntryForm() {
                         />
                         <span className="icon-field__suffix">{productType === 'liquid' ? 'oz' : 'lbs'}</span>
                       </div>
-                      {showFullNPK ? (
-                        <div className="icon-field">
-                          <Icon name="leaf" size={16} className="icon-field__icon" />
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            max="100"
-                            placeholder="N%"
-                            value={p.nPercent}
-                            onChange={(e) => updateProduct(i, { nPercent: e.target.value })}
-                          />
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            max="100"
-                            placeholder="P%"
-                            value={p.pPercent}
-                            onChange={(e) => updateProduct(i, { pPercent: e.target.value })}
-                          />
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            max="100"
-                            placeholder="K%"
-                            value={p.kPercent}
-                            onChange={(e) => updateProduct(i, { kPercent: e.target.value })}
-                          />
-                        </div>
-                      ) : (
-                        showNPercent && (
+                      {showNPK && (
+                        <>
                           <div className="icon-field">
                             <Icon name="leaf" size={16} className="icon-field__icon" />
                             <input
@@ -364,12 +333,33 @@ export default function LogEntryForm() {
                               inputMode="decimal"
                               min="0"
                               max="100"
-                              placeholder="N% (optional)"
+                              placeholder="N%"
                               value={p.nPercent}
                               onChange={(e) => updateProduct(i, { nPercent: e.target.value })}
                             />
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              max="100"
+                              placeholder="P%"
+                              value={p.pPercent}
+                              onChange={(e) => updateProduct(i, { pPercent: e.target.value })}
+                            />
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              max="100"
+                              placeholder="K%"
+                              value={p.kPercent}
+                              onChange={(e) => updateProduct(i, { kPercent: e.target.value })}
+                            />
                           </div>
-                        )
+                          {!requireNPK && (
+                            <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: -4 }}>N-P-K optional</div>
+                          )}
+                        </>
                       )}
                       {productType === 'granular' ? (
                         <div className="icon-field">

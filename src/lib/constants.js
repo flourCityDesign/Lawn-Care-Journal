@@ -14,14 +14,16 @@ export const LOG_FILTERS = ['All', 'Mow', 'Treatment', 'Seed', 'Notes']
 
 export const TREATMENT_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Bentgrass treatment', 'Soil Amendments']
 
-// Categories whose products can carry an N% (some pre-emergents and soil
-// amendments are "weed-and-feed" style and do carry nitrogen). Herbicides
-// that carry nitrogen should just be logged as Fertilizer instead, and
-// Bentgrass treatment is intentionally excluded.
-export const N_TRACKED_CATEGORIES = ['Fertilizer', 'Pre-emergent', 'Soil Amendments']
+// Categories that show N-P-K fields on products. Many granular
+// pre-emergents (e.g. prodiamine blends) do carry an NPK value, so
+// Pre-emergent gets the fields too, just optional rather than required.
+// Herbicide and Soil Amendments products that carry nitrogen should just be
+// logged as Fertilizer instead, where N is fully tracked.
+export const NPK_CATEGORIES = ['Fertilizer', 'Pre-emergent']
+export const NPK_REQUIRED_CATEGORIES = ['Fertilizer']
 
-// Categories that track the full N-P-K, not just N. Fertilizer only.
-export const NPK_CATEGORIES = ['Fertilizer']
+// N from any NPK-tracked category counts toward the annual nitrogen budget.
+export const N_TRACKED_CATEGORIES = NPK_CATEGORIES
 
 export function filterGroupForCategory(category) {
   if (category === 'Mow') return 'Mow'

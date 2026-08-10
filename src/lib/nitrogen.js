@@ -1,7 +1,7 @@
 // Nitrogen budget: sum of (product amount lbs) x (N% / 100) across
 // N-tracked applications this year, expressed per 1,000 sqft of total lawn
-// area. N-tracked categories are Fertilizer plus any other treatment type
-// whose products can carry N (weed-and-feed herbicides, etc).
+// area. N-tracked categories are Fertilizer and Pre-emergent (some granular
+// pre-emergents carry an NPK value) - see NPK_CATEGORIES in constants.js.
 
 import { ALL_ZONES_ID, ALL_ZONES_LABEL, N_TRACKED_CATEGORIES, getZoneIds } from './constants'
 import { parseLocalDate } from './date'

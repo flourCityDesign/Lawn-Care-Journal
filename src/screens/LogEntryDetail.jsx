@@ -4,7 +4,7 @@ import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, Button, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
 import PhotoLightbox from '../components/PhotoLightbox'
-import { CATEGORY_ICON, N_TRACKED_CATEGORIES, zoneLabelForApp } from '../lib/constants'
+import { CATEGORY_ICON, N_TRACKED_CATEGORIES, NPK_CATEGORIES, zoneLabelForApp } from '../lib/constants'
 import { appNRatePer1000 } from '../lib/nitrogen'
 
 function Row({ icon, label, children }) {
@@ -92,7 +92,7 @@ export default function LogEntryDetail() {
             </Row>
             {app.products.map((p, i) => {
               const unit = app.productType === 'liquid' ? 'oz' : 'lbs'
-              const npk = app.category === 'Fertilizer' && (p.nPercent || p.pPercent || p.kPercent)
+              const npk = NPK_CATEGORIES.includes(app.category) && (p.nPercent || p.pPercent || p.kPercent)
               const detailParts = [
                 p.amount ? `${p.amount} ${unit}` : null,
                 npk ? `${p.nPercent || 0}-${p.pPercent || 0}-${p.kPercent || 0} (N-P-K)` : p.nPercent ? `${p.nPercent}% N` : null,

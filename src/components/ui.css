@@ -408,7 +408,7 @@
 
 .log-card__meta-icon {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 0;
   color: var(--text-faint);
 }
 

@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, Button, formatDate, formatRelativeDate } from '../components/ui'
 import Icon from '../components/Icon'
+import PhotoLightbox from '../components/PhotoLightbox'
 import { CATEGORY_ICON, N_TRACKED_CATEGORIES, zoneLabelForApp } from '../lib/constants'
 import { appNRatePer1000 } from '../lib/nitrogen'
 
@@ -22,6 +24,7 @@ export default function LogEntryDetail() {
   const navigate = useNavigate()
   const { applications, zones, photos, deleteApplication } = useData()
   const app = applications.find((a) => a.id === id)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
   if (!app) {
     return (
@@ -133,14 +136,29 @@ export default function LogEntryDetail() {
         )}
 
         {entryPhotos.length > 0 && (
-          <div style={{ padding: '14px 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {entryPhotos.map((p) => (
-              <img
+          <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {entryPhotos.map((p, i) => (
+              <button
                 key={p.id}
-                src={p.dataUrl}
-                alt=""
-                style={{ width: '100%', maxWidth: 320, borderRadius: 12, display: 'block' }}
-              />
+                type="button"
+                onClick={() => setLightboxIndex(i)}
+                style={{
+                  width: '100%',
+                  aspectRatio: '16 / 9',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  background: 'var(--card-alt)',
+                }}
+              >
+                <img
+                  src={p.dataUrl}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -151,6 +169,10 @@ export default function LogEntryDetail() {
           Duplicate Entry
         </Button>
       </div>
+
+      {lightboxIndex !== null && (
+        <PhotoLightbox photos={entryPhotos} startIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+      )}
     </Page>
   )
 }

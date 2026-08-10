@@ -445,7 +445,41 @@ export default function LogEntryForm() {
 
             <div className="field">
               <label htmlFor="photo">Photos</label>
-              <input id="photo" type="file" accept="image/*" capture="environment" multiple onChange={handlePhotoChange} />
+              <input
+                id="photo"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoChange}
+                style={{
+                  position: 'absolute',
+                  width: 1,
+                  height: 1,
+                  overflow: 'hidden',
+                  clip: 'rect(0 0 0 0)',
+                }}
+              />
+              <label
+                htmlFor="photo"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  padding: '32px 16px',
+                  border: '2px dashed var(--card-border)',
+                  borderRadius: 14,
+                  color: 'var(--text-dim)',
+                  cursor: 'pointer',
+                  textTransform: 'none',
+                  letterSpacing: 'normal',
+                  fontWeight: 500,
+                }}
+              >
+                <Icon name="camera" size={28} />
+                <span style={{ fontSize: 15 }}>Add Photo</span>
+              </label>
               {uploading && <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 6 }}>Processing photo...</div>}
               {existingPhotos.length > 0 && (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>

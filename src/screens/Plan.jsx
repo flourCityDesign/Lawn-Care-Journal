@@ -1,9 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, ProgressBar, PillRow } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORIES, CATEGORY_ICON, ALL_ZONES_ID, planTaskAppliesToZone, getPlanTaskZoneIds } from '../lib/constants'
+
+// Expands a task's zone scope into an explicit list with removeZoneId taken
+// out. A Whole Lawn task has to be expanded into every other real zone
+// first - just filtering ALL_ZONES_ID out of a 1-item array would leave an
+// empty array, which reads back as Whole Lawn again (see getPlanTaskZoneIds).
+function narrowTaskZones(task, removeZoneId, allZones) {
+  const ids = getPlanTaskZoneIds(task)
+  if (ids.includes(ALL_ZONES_ID)) {
+    return allZones.map((z) => z.id).filter((id) => id !== removeZoneId)
+  }
+  return ids.filter((id) => id !== removeZoneId)
+}
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -13,7 +25,7 @@ const MONTH_NAMES = [
 export default function Plan() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { zones, planTasks, ensureYearPlan, resetYearPlan, addPlanTask, updatePlanTask, deletePlanTask } = useData()
+  const { zones, planTasks, addPlanTask, updatePlanTask, deletePlanTask, deletePlanTasks } = useData()
   const [year, setYear] = useState(new Date().getFullYear())
   const [zoneFilter, setZoneFilter] = useState(() => {
     const zoneId = searchParams.get('zone')
@@ -22,10 +34,6 @@ export default function Plan() {
   const [addingMonth, setAddingMonth] = useState(null)
   const [newCategory, setNewCategory] = useState('Other')
   const [newDescription, setNewDescription] = useState('')
-
-  useEffect(() => {
-    ensureYearPlan(year)
-  }, [ensureYearPlan, year])
 
   const zoneOptions = useMemo(() => ['All', ...zones.map((z) => z.name)], [zones])
   const filterZone = zones.find((z) => z.name === zoneFilter)
@@ -71,9 +79,30 @@ export default function Plan() {
     setAddingMonth(null)
   }
 
-  function handleReset() {
-    if (window.confirm(`Reset ${year} to the default plan? This removes all ${year} tasks, including custom ones and progress.`)) {
-      resetYearPlan(year)
+  function handleClearAll() {
+    const scoped = zoneFilter !== 'All'
+    const warning = scoped ? ' This includes any Whole Lawn tasks, which will be removed for every yard, not just this one.' : ''
+    if (window.confirm(`Clear all ${yearTasks.length} task${yearTasks.length === 1 ? '' : 's'} shown for ${year}?${warning} This can't be undone.`)) {
+      deletePlanTasks(yearTasks.map((t) => t.id))
+    }
+  }
+
+  function handleRemoveTask(task) {
+    const ids = getPlanTaskZoneIds(task)
+    const scopedToThisYardOnly = zoneFilter === 'All' || !filterZone || (ids.length === 1 && ids[0] === filterZone.id)
+    if (scopedToThisYardOnly) {
+      if (window.confirm('Remove this task?')) deletePlanTask(task.id)
+      return
+    }
+    const removeHereOnly = window.confirm(
+      `This task applies to more than just ${filterZone.name}. Remove it from ${filterZone.name} only?\n\nPress Cancel for the option to delete it everywhere.`
+    )
+    if (removeHereOnly) {
+      updatePlanTask(task.id, { zoneIds: narrowTaskZones(task, filterZone.id, zones) })
+      return
+    }
+    if (window.confirm(`Delete this task from every yard, including ${filterZone.name}?`)) {
+      deletePlanTask(task.id)
     }
   }
 
@@ -116,14 +145,16 @@ export default function Plan() {
         <div style={{ padding: '0 16px 16px' }}>
           <ProgressBar pct={planPct} color="var(--accent-2)" />
         </div>
-        <div style={{ padding: '0 16px 16px', textAlign: 'center' }}>
-          <button
-            onClick={handleReset}
-            style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 12, textDecoration: 'underline', padding: 0 }}
-          >
-            Reset {year} to default plan
-          </button>
-        </div>
+        {yearTasks.length > 0 && (
+          <div style={{ padding: '0 16px 16px', textAlign: 'center' }}>
+            <button
+              onClick={handleClearAll}
+              style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 12, textDecoration: 'underline', padding: 0 }}
+            >
+              Clear {yearTasks.length} task{yearTasks.length === 1 ? '' : 's'} shown for {year}
+            </button>
+          </div>
+        )}
       </Card>
 
       {MONTH_NAMES.map((name, idx) => {
@@ -220,7 +251,7 @@ export default function Plan() {
                         <Icon name="plus" size={14} />
                       </button>
                       <button
-                        onClick={() => window.confirm('Remove this task?') && deletePlanTask(task.id)}
+                        onClick={() => handleRemoveTask(task)}
                         aria-label="Delete task"
                         className="btn btn--danger"
                         style={{ padding: '8px 10px' }}

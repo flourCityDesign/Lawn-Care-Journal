@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useMemo, useState, useCallback } 
 import { readKey, writeKey, STORAGE_KEYS } from './storage'
 import { makeId } from './id'
 import { DEFAULT_SETTINGS, ALL_ZONES_ID } from './constants'
-import { buildDefaultPlanTasks } from './planDefaults'
 
 const DataContext = createContext(null)
 
@@ -84,18 +83,6 @@ export function DataProvider({ children }) {
   }, [])
 
   // ---- Plan tasks ----
-  const ensureYearPlan = useCallback(
-    (year) => {
-      setPlanTasks((prev) => {
-        if (prev.some((t) => t.year === year)) return prev
-        return [...prev, ...buildDefaultPlanTasks(year)]
-      })
-    },
-    []
-  )
-  const resetYearPlan = useCallback((year) => {
-    setPlanTasks((prev) => [...prev.filter((t) => t.year !== year), ...buildDefaultPlanTasks(year)])
-  }, [])
   const addPlanTask = useCallback((task) => {
     const record = {
       id: makeId(),
@@ -115,6 +102,9 @@ export function DataProvider({ children }) {
   }, [])
   const deletePlanTask = useCallback((id) => {
     setPlanTasks((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+  const deletePlanTasks = useCallback((ids) => {
+    setPlanTasks((prev) => prev.filter((t) => !ids.includes(t.id)))
   }, [])
 
   // ---- Settings ----
@@ -151,11 +141,10 @@ export function DataProvider({ children }) {
       addPhoto,
       deletePhoto,
       planTasks,
-      ensureYearPlan,
-      resetYearPlan,
       addPlanTask,
       updatePlanTask,
       deletePlanTask,
+      deletePlanTasks,
       settings,
       updateSettings,
       weatherCache,
@@ -177,11 +166,10 @@ export function DataProvider({ children }) {
       addPhoto,
       deletePhoto,
       planTasks,
-      ensureYearPlan,
-      resetYearPlan,
       addPlanTask,
       updatePlanTask,
       deletePlanTask,
+      deletePlanTasks,
       settings,
       updateSettings,
       weatherCache,

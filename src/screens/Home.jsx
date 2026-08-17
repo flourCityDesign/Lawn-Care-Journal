@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, Card, CardBody, IconBadge, SectionLabel, ProgressBar, formatRelativeDate, statusTone } from '../components/ui'
@@ -20,12 +20,8 @@ function greeting() {
 
 export default function Home() {
   const navigate = useNavigate()
-  const { zones, applications, planTasks, ensureYearPlan, settings, weatherCache } = useData()
+  const { zones, applications, planTasks, settings, weatherCache } = useData()
   const year = new Date().getFullYear()
-
-  useEffect(() => {
-    ensureYearPlan(year)
-  }, [ensureYearPlan, year])
 
   const recent = useMemo(
     () => [...applications].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4),

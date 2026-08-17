@@ -14,8 +14,6 @@ export default function Settings() {
   const [locationStatus, setLocationStatus] = useState('')
   const [locationSaving, setLocationSaving] = useState(false)
 
-  const [bentgrassCap, setBentgrassCap] = useState(settings.bentgrassSeasonCap)
-  const [bentgrassRetreat, setBentgrassRetreat] = useState(settings.bentgrassRetreatDays)
   const [nCap, setNCap] = useState(settings.nitrogenAnnualCap)
 
   const [importStatus, setImportStatus] = useState('')
@@ -53,8 +51,6 @@ export default function Settings() {
   function saveThresholds(e) {
     e.preventDefault()
     updateSettings({
-      bentgrassSeasonCap: Number(bentgrassCap) || 3,
-      bentgrassRetreatDays: Number(bentgrassRetreat) || 21,
       nitrogenAnnualCap: Number(nCap) || 4,
     })
   }
@@ -159,24 +155,16 @@ export default function Settings() {
         </CardBody>
       </Card>
 
-      <SectionLabel icon="flask">Treatment Thresholds</SectionLabel>
+      <SectionLabel icon="leaf">Nitrogen Budget</SectionLabel>
       <Card>
         <CardBody>
           <form onSubmit={saveThresholds}>
-            <div className="field">
-              <label htmlFor="bcap">Bentgrass max applications / season</label>
-              <input id="bcap" type="number" min="1" value={bentgrassCap} onChange={(e) => setBentgrassCap(e.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="bretreat">Days before safe to re-treat</label>
-              <input id="bretreat" type="number" min="1" value={bentgrassRetreat} onChange={(e) => setBentgrassRetreat(e.target.value)} />
-            </div>
             <div className="field">
               <label htmlFor="ncap">Nitrogen annual cap (lbs actual N / 1,000 sqft)</label>
               <input id="ncap" type="number" min="0" step="0.5" value={nCap} onChange={(e) => setNCap(e.target.value)} />
             </div>
             <Button type="submit" block variant="secondary">
-              Save Thresholds
+              Save
             </Button>
           </form>
         </CardBody>

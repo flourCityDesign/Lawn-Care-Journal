@@ -2,7 +2,6 @@ export const CATEGORIES = [
   'Fertilizer',
   'Herbicide',
   'Pre-emergent',
-  'Bentgrass treatment',
   'Soil Amendments',
   'Seed',
   'Mow',
@@ -12,7 +11,7 @@ export const CATEGORIES = [
 // Groupings used for the Log screen's pill filters
 export const LOG_FILTERS = ['All', 'Mow', 'Treatment', 'Seed', 'Notes']
 
-export const TREATMENT_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Bentgrass treatment', 'Soil Amendments']
+export const TREATMENT_CATEGORIES = ['Fertilizer', 'Herbicide', 'Pre-emergent', 'Soil Amendments']
 
 // Categories that show N-P-K fields on products. Many granular
 // pre-emergents (e.g. prodiamine blends) do carry an NPK value, so
@@ -31,8 +30,6 @@ export function filterGroupForCategory(category) {
   if (TREATMENT_CATEGORIES.includes(category)) return 'Treatment'
   return 'Notes'
 }
-
-export const BENTGRASS_CATEGORY = 'Bentgrass treatment'
 
 // Optional rough timing within a task's chosen month - a Program Builder
 // task is never given an exact date, just "sometime early/mid/late April".
@@ -101,7 +98,6 @@ export const CATEGORY_ICON = {
   Fertilizer: { icon: 'flask', color: '#D4E157' },
   Herbicide: { icon: 'flask', color: '#F2A65A' },
   'Pre-emergent': { icon: 'flask', color: '#F2A65A' },
-  'Bentgrass treatment': { icon: 'flask', color: '#FF6B6B' },
   'Soil Amendments': { icon: 'leaf', color: '#B08968' },
   Seed: { icon: 'seed', color: '#7FFF3D' },
   Other: { icon: 'note', color: '#9AA5A0' },
@@ -111,8 +107,6 @@ export const DEFAULT_SETTINGS = {
   locationLabel: '',
   lat: null,
   lon: null,
-  bentgrassSeasonCap: 3,
-  bentgrassRetreatDays: 21,
   nitrogenAnnualCap: 4,
   onboarded: false,
 }

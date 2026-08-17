@@ -1,12 +1,10 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
-import { Page, PageHeader, Card, CardBody, IconBadge, ProgressBar, EmptyState, LogCard, logMetaItems, formatDate } from '../components/ui'
+import { Page, PageHeader, Card, CardBody, IconBadge, ProgressBar, EmptyState, LogCard, logMetaItems } from '../components/ui'
 import Icon from '../components/Icon'
 import { CATEGORY_ICON, ALL_ZONES_ID, appliesToZone, getZoneIds } from '../lib/constants'
-import { bentgrassZoneHistory } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
 import { groupByMonth } from '../lib/dateGroups'
-import { parseLocalDate } from '../lib/date'
 
 function zoneHistorySubtitle(app, currentZoneId, zones) {
   const ids = getZoneIds(app)
@@ -40,15 +38,6 @@ export default function ZoneDetail() {
   const nCap = settings.nitrogenAnnualCap
   const nOverBudget = nCap > 0 && nPage.per1000 > nCap
   const nColor = nOverBudget ? 'var(--status-bad)' : 'var(--status-good)'
-
-  const bentgrassHistory = bentgrassZoneHistory(applications, zone.id)
-  const lastBentgrass = bentgrassHistory[0]
-  let safeAfter = null
-  if (lastBentgrass) {
-    const d = parseLocalDate(lastBentgrass.date)
-    d.setDate(d.getDate() + Number(settings.bentgrassRetreatDays || 21))
-    safeAfter = d
-  }
 
   function handleDelete() {
     if (window.confirm(`Delete "${zone.name}"? This won't delete its logged applications.`)) {
@@ -126,26 +115,6 @@ export default function ZoneDetail() {
           </div>
         </Card>
       </Link>
-
-      {lastBentgrass && (
-        <Card>
-          <CardBody>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <IconBadge icon="flask" color="#FF6B6B" size={32} iconSize={16} />
-              <div style={{ fontWeight: 700 }}>Bentgrass treatment</div>
-            </div>
-            <div style={{ color: 'var(--text-dim)', fontSize: 14, marginTop: 6 }}>
-              {bentgrassHistory.length} application{bentgrassHistory.length === 1 ? '' : 's'} this season · last on{' '}
-              {formatDate(lastBentgrass.date)}
-            </div>
-            {safeAfter && (
-              <div style={{ color: 'var(--status-caution)', fontSize: 13, marginTop: 6 }}>
-                Safe to re-treat on or after {formatDate(safeAfter)}
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      )}
 
       <div className="section-label">
         <Icon name="list" size={14} />

@@ -2,10 +2,8 @@ import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, CardBody, Button, formatDate } from '../components/ui'
-import { CATEGORIES, TREATMENT_CATEGORIES, NPK_CATEGORIES, NPK_REQUIRED_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, BENTGRASS_CATEGORY, getZoneIds } from '../lib/constants'
+import { CATEGORIES, TREATMENT_CATEGORIES, NPK_CATEGORIES, NPK_REQUIRED_CATEGORIES, ALL_ZONES_ID, ALL_ZONES_LABEL, getZoneIds } from '../lib/constants'
 import { resizeImageFile } from '../lib/image'
-import { bentgrassStatus } from '../lib/bentgrass'
-import { parseLocalDate } from '../lib/date'
 import Icon from '../components/Icon'
 
 const CUT_HEIGHT_STEP = 0.25
@@ -29,8 +27,7 @@ export default function LogEntryForm() {
   const { id } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const { applications, zones, addApplication, updateApplication, productNameHistory, addPhoto, photos, deletePhoto, settings, updatePlanTask } =
-    useData()
+  const { applications, zones, addApplication, updateApplication, productNameHistory, addPhoto, photos, deletePhoto, updatePlanTask } = useData()
 
   const existing = id ? applications.find((a) => a.id === id) : null
   const isEdit = Boolean(existing)
@@ -74,17 +71,9 @@ export default function LogEntryForm() {
   const isTreatment = TREATMENT_CATEGORIES.includes(category)
   const showNPK = NPK_CATEGORIES.includes(category)
   const requireNPK = NPK_REQUIRED_CATEGORIES.includes(category)
-  const isBentgrass = category === BENTGRASS_CATEGORY
 
   const productSuggestions = useMemo(() => productNameHistory(category), [productNameHistory, category])
   const existingPhotos = photoIds.map((pid) => photos.find((p) => p.id === pid)).filter(Boolean)
-
-  const bStatus = useMemo(() => {
-    if (!isBentgrass) return null
-    const excludeCurrentYear = parseLocalDate(date).getFullYear()
-    const others = applications.filter((a) => a.id !== existing?.id)
-    return bentgrassStatus(others, settings.bentgrassSeasonCap, settings.bentgrassRetreatDays, excludeCurrentYear)
-  }, [isBentgrass, applications, existing, settings, date])
 
   function toggleZone(id) {
     setZoneIds((prev) => {
@@ -420,38 +409,6 @@ export default function LogEntryForm() {
                   />
                 </div>
               </>
-            )}
-
-            {isBentgrass && bStatus && (
-              <div
-                className="field"
-                style={{
-                  background: bStatus.atCap ? 'var(--status-bad-bg)' : 'var(--status-caution-bg)',
-                  border: `1px solid ${bStatus.atCap ? 'var(--danger)' : 'var(--status-caution)'}`,
-                  borderRadius: 12,
-                  padding: 12,
-                  display: 'flex',
-                  gap: 10,
-                  alignItems: 'flex-start',
-                }}
-              >
-                <Icon
-                  name="alert"
-                  size={18}
-                  style={{ color: bStatus.atCap ? 'var(--danger)' : 'var(--status-caution)', flexShrink: 0, marginTop: 1 }}
-                />
-                <div style={{ fontSize: 13, color: bStatus.atCap ? 'var(--danger)' : 'var(--status-caution)' }}>
-                  {bStatus.atCap
-                    ? `This would exceed your season cap of ${bStatus.cap} bentgrass application${bStatus.cap === 1 ? '' : 's'} (${bStatus.count} already logged).`
-                    : `${bStatus.count} of ${bStatus.cap} max bentgrass applications used this season.`}
-                  {bStatus.safeAfter && (
-                    <div style={{ marginTop: 4 }}>
-                      Last treated {parseLocalDate(bStatus.lastApp.date).toLocaleDateString()} — safe to re-treat on or after{' '}
-                      {bStatus.safeAfter.toLocaleDateString()}.
-                    </div>
-                  )}
-                </div>
-              </div>
             )}
 
             <div className="field">

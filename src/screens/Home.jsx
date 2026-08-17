@@ -6,7 +6,6 @@ import Icon from '../components/Icon'
 import NBudgetCard from '../components/NBudgetCard'
 import { CATEGORY_ICON, appliesToZone, zoneLabelForApp } from '../lib/constants'
 import { computeMowScore } from '../lib/mow'
-import { bentgrassStatus } from '../lib/bentgrass'
 import { nitrogenYtdByZone } from '../lib/nitrogen'
 import { computeDiseaseRiskHistory } from '../lib/diseaseRisk'
 import './Home.css'
@@ -32,7 +31,6 @@ export default function Home() {
   const doneCount = yearTasks.filter((t) => t.completed).length
   const planPct = yearTasks.length ? Math.round((doneCount / yearTasks.length) * 100) : 0
 
-  const bStatus = bentgrassStatus(applications, settings.bentgrassSeasonCap, settings.bentgrassRetreatDays, year)
   const nBudgetPages = nitrogenYtdByZone(applications, zones, year)
 
   const mow = weatherCache
@@ -154,23 +152,7 @@ export default function Home() {
       <SectionLabel icon="flask" action="View log" actionTo="/log">
         This Season
       </SectionLabel>
-      <div className="stat-tile-row">
-        <Card>
-          <CardBody>
-            <div style={{ color: 'var(--text-dim)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Bentgrass Apps</div>
-            <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, color: bStatus.atCap ? 'var(--status-bad)' : 'var(--text)' }}>
-              {bStatus.count} <span style={{ fontSize: 15, color: 'var(--text-dim)', fontWeight: 600 }}>/ {bStatus.cap}</span>
-            </div>
-            <div style={{ marginTop: 8 }}>
-              <ProgressBar
-                pct={(bStatus.count / bStatus.cap) * 100}
-                color={bStatus.atCap ? 'var(--status-bad)' : 'var(--accent)'}
-              />
-            </div>
-          </CardBody>
-        </Card>
-        <NBudgetCard pages={nBudgetPages} cap={settings.nitrogenAnnualCap} />
-      </div>
+      <NBudgetCard pages={nBudgetPages} cap={settings.nitrogenAnnualCap} />
 
       <SectionLabel icon="layers" action="See all" actionTo="/yards">
         My Yards

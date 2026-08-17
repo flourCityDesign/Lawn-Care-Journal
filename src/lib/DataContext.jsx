@@ -10,6 +10,8 @@ export function DataProvider({ children }) {
   const [applications, setApplications] = useState(() => readKey(STORAGE_KEYS.applications, []))
   const [photos, setPhotos] = useState(() => readKey(STORAGE_KEYS.photos, []))
   const [planTasks, setPlanTasks] = useState(() => readKey(STORAGE_KEYS.planTasks, []))
+  const [programs, setPrograms] = useState(() => readKey(STORAGE_KEYS.programs, []))
+  const [programTasks, setProgramTasks] = useState(() => readKey(STORAGE_KEYS.programTasks, []))
   const [settings, setSettings] = useState(() => ({ ...DEFAULT_SETTINGS, ...readKey(STORAGE_KEYS.settings, {}) }))
   const [weatherCache, setWeatherCache] = useState(() => readKey(STORAGE_KEYS.weatherCache, null))
 
@@ -17,6 +19,8 @@ export function DataProvider({ children }) {
   useEffect(() => writeKey(STORAGE_KEYS.applications, applications), [applications])
   useEffect(() => writeKey(STORAGE_KEYS.photos, photos), [photos])
   useEffect(() => writeKey(STORAGE_KEYS.planTasks, planTasks), [planTasks])
+  useEffect(() => writeKey(STORAGE_KEYS.programs, programs), [programs])
+  useEffect(() => writeKey(STORAGE_KEYS.programTasks, programTasks), [programTasks])
   useEffect(() => writeKey(STORAGE_KEYS.settings, settings), [settings])
   useEffect(() => {
     if (weatherCache) writeKey(STORAGE_KEYS.weatherCache, weatherCache)
@@ -88,8 +92,12 @@ export function DataProvider({ children }) {
       id: makeId(),
       year: new Date().getFullYear(),
       month: 1,
+      timing: '',
       category: 'Other',
       description: '',
+      cutHeight: '',
+      productType: null,
+      products: null,
       completed: false,
       zoneIds: [ALL_ZONES_ID],
       ...task,
@@ -107,6 +115,87 @@ export function DataProvider({ children }) {
     setPlanTasks((prev) => prev.filter((t) => !ids.includes(t.id)))
   }, [])
 
+  // ---- Programs (Program Builder drafts) ----
+  const addProgram = useCallback((program) => {
+    const record = { id: makeId(), name: '', createdAt: new Date().toISOString(), ...program }
+    setPrograms((prev) => [...prev, record])
+    return record
+  }, [])
+  const updateProgram = useCallback((id, patch) => {
+    setPrograms((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
+  }, [])
+  const deleteProgram = useCallback((id) => {
+    setPrograms((prev) => prev.filter((p) => p.id !== id))
+    setProgramTasks((prev) => prev.filter((t) => t.programId !== id))
+  }, [])
+
+  const addProgramTask = useCallback((task) => {
+    const record = {
+      id: makeId(),
+      programId: null,
+      month: 1,
+      timing: '',
+      category: 'Other',
+      description: '',
+      cutHeight: '',
+      productType: null,
+      products: null,
+      ...task,
+    }
+    setProgramTasks((prev) => [...prev, record])
+    return record
+  }, [])
+  const updateProgramTask = useCallback((id, patch) => {
+    setProgramTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
+  }, [])
+  const deleteProgramTask = useCallback((id) => {
+    setProgramTasks((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  // Commits a draft program task into a real plan task for the given year
+  // and zone scope. The draft stays put in the program - Program Builder is
+  // a reusable template, not a one-time staging list, so a task can be
+  // committed again next year (or to another yard) without redrafting it.
+  const commitProgramTask = useCallback(
+    (programTaskId, { year, zoneIds }) => {
+      const task = programTasks.find((t) => t.id === programTaskId)
+      if (!task) return null
+      return addPlanTask({
+        year,
+        month: task.month,
+        timing: task.timing,
+        category: task.category,
+        description: task.description,
+        cutHeight: task.cutHeight,
+        productType: task.productType,
+        products: task.products,
+        zoneIds,
+      })
+    },
+    [programTasks, addPlanTask]
+  )
+
+  const commitAllProgramTasks = useCallback(
+    (programId, { year, zoneIds }) => {
+      const tasks = programTasks.filter((t) => t.programId === programId)
+      tasks.forEach((task) => {
+        addPlanTask({
+          year,
+          month: task.month,
+          timing: task.timing,
+          category: task.category,
+          description: task.description,
+          cutHeight: task.cutHeight,
+          productType: task.productType,
+          products: task.products,
+          zoneIds,
+        })
+      })
+      return tasks.length
+    },
+    [programTasks, addPlanTask]
+  )
+
   // ---- Settings ----
   const updateSettings = useCallback((patch) => {
     setSettings((prev) => ({ ...prev, ...patch }))
@@ -114,8 +203,18 @@ export function DataProvider({ children }) {
 
   // ---- Backup ----
   const exportAll = useCallback(() => {
-    return { zones, applications, photos, planTasks, settings, exportedAt: new Date().toISOString(), version: 1 }
-  }, [zones, applications, photos, planTasks, settings])
+    return {
+      zones,
+      applications,
+      photos,
+      planTasks,
+      programs,
+      programTasks,
+      settings,
+      exportedAt: new Date().toISOString(),
+      version: 1,
+    }
+  }, [zones, applications, photos, planTasks, programs, programTasks, settings])
 
   const importAll = useCallback((data) => {
     if (!data || typeof data !== 'object') throw new Error('Invalid backup file')
@@ -123,6 +222,8 @@ export function DataProvider({ children }) {
     if (Array.isArray(data.applications)) setApplications(data.applications)
     if (Array.isArray(data.photos)) setPhotos(data.photos)
     if (Array.isArray(data.planTasks)) setPlanTasks(data.planTasks)
+    if (Array.isArray(data.programs)) setPrograms(data.programs)
+    if (Array.isArray(data.programTasks)) setProgramTasks(data.programTasks)
     if (data.settings) setSettings((prev) => ({ ...prev, ...data.settings }))
   }, [])
 
@@ -145,6 +246,16 @@ export function DataProvider({ children }) {
       updatePlanTask,
       deletePlanTask,
       deletePlanTasks,
+      programs,
+      addProgram,
+      updateProgram,
+      deleteProgram,
+      programTasks,
+      addProgramTask,
+      updateProgramTask,
+      deleteProgramTask,
+      commitProgramTask,
+      commitAllProgramTasks,
       settings,
       updateSettings,
       weatherCache,
@@ -170,6 +281,16 @@ export function DataProvider({ children }) {
       updatePlanTask,
       deletePlanTask,
       deletePlanTasks,
+      programs,
+      addProgram,
+      updateProgram,
+      deleteProgram,
+      programTasks,
+      addProgramTask,
+      updateProgramTask,
+      deleteProgramTask,
+      commitProgramTask,
+      commitAllProgramTasks,
       settings,
       updateSettings,
       weatherCache,

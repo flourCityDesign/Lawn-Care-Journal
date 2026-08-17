@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
 import { Page, PageHeader, Card, IconBadge, ProgressBar, PillRow } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORIES, CATEGORY_ICON, ALL_ZONES_ID, planTaskAppliesToZone, getPlanTaskZoneIds } from '../lib/constants'
+import { CATEGORIES, CATEGORY_ICON, ALL_ZONES_ID, taskDetailLine, planTaskAppliesToZone, getPlanTaskZoneIds } from '../lib/constants'
 
 // Expands a task's zone scope into an explicit list with removeZoneId taken
 // out. A Whole Lawn task has to be expanded into every other real zone
@@ -55,8 +55,16 @@ export default function Plan() {
   const planPct = yearTasks.length ? Math.round((doneCount / yearTasks.length) * 100) : 0
 
   function logTask(task) {
+    const hasStructuredDetail = (task.products && task.products.length > 0) || task.cutHeight
     navigate('/log/new', {
-      state: { category: task.category, notes: task.description, linkedTaskId: task.id },
+      state: {
+        category: task.category,
+        notes: task.description,
+        linkedTaskId: task.id,
+        ...(hasStructuredDetail
+          ? { duplicateFrom: { category: task.category, products: task.products, productType: task.productType, cutHeight: task.cutHeight } }
+          : {}),
+      },
     })
   }
 
@@ -233,10 +241,14 @@ export default function Plan() {
                       >
                         {task.description}
                       </div>
+                      {taskDetailLine(task) && (
+                        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>{taskDetailLine(task)}</div>
+                      )}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
                         <IconBadge icon={meta.icon} color={meta.color} size={18} iconSize={11} />
                         <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>
                           {task.category}
+                          {task.timing && ` · ${task.timing}`}
                           {zoneFilter === 'All' && ` · ${taskZoneLabel}`}
                         </span>
                       </div>

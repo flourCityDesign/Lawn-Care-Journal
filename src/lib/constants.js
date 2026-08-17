@@ -34,6 +34,10 @@ export function filterGroupForCategory(category) {
 
 export const BENTGRASS_CATEGORY = 'Bentgrass treatment'
 
+// Optional rough timing within a task's chosen month - a Program Builder
+// task is never given an exact date, just "sometime early/mid/late April".
+export const TASK_TIMING_OPTIONS = ['Early', 'Mid', 'Late']
+
 export const ALL_ZONES_ID = 'all'
 export const ALL_ZONES_LABEL = 'Whole Lawn (All Zones)'
 
@@ -68,6 +72,28 @@ export function getPlanTaskZoneIds(task) {
 export function planTaskAppliesToZone(task, zoneId) {
   const ids = getPlanTaskZoneIds(task)
   return ids.includes(zoneId) || ids.includes(ALL_ZONES_ID)
+}
+
+// A one-line summary of a task's structured detail (product/amount/N-P-K,
+// cut height). Works for both committed plan tasks and Program Builder
+// draft tasks - they share the same shape for these fields.
+export function taskDetailLine(task) {
+  const parts = []
+  if (task.category === 'Mow' && task.cutHeight) parts.push(`Cut height: ${task.cutHeight}`)
+  if (task.products?.length) {
+    const unit = task.productType === 'liquid' ? 'oz' : 'lbs'
+    task.products.forEach((p) => {
+      const bits = [p.name].filter(Boolean)
+      if (p.amount) bits.push(`${p.amount} ${unit}`)
+      if (NPK_CATEGORIES.includes(task.category) && (p.nPercent || p.pPercent || p.kPercent)) {
+        bits.push(`${p.nPercent || 0}-${p.pPercent || 0}-${p.kPercent || 0}`)
+      } else if (p.nPercent) {
+        bits.push(`${p.nPercent}% N`)
+      }
+      if (bits.length) parts.push(bits.join(' · '))
+    })
+  }
+  return parts.join(' · ')
 }
 
 export const CATEGORY_ICON = {

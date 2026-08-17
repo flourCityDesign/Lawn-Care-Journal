@@ -25,6 +25,8 @@ export const STORAGE_KEYS = {
   applications: 'applications',
   photos: 'photos',
   planTasks: 'planTasks',
+  programs: 'programs',
+  programTasks: 'programTasks',
   settings: 'settings',
   weatherCache: 'weatherCache',
 }

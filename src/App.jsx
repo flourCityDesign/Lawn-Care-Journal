@@ -11,6 +11,8 @@ import ZoneForm from './screens/ZoneForm'
 import ZoneDetail from './screens/ZoneDetail'
 import Plan from './screens/Plan'
 import ProgramBuilder from './screens/ProgramBuilder'
+import ProgramDetail from './screens/ProgramDetail'
+import ProgramTaskForm from './screens/ProgramTaskForm'
 import Settings from './screens/Settings'
 
 export default function App() {
@@ -34,6 +36,9 @@ export default function App() {
         <Route path="/yards/:id/edit" element={<ZoneForm />} />
         <Route path="/plan" element={<Plan />} />
         <Route path="/plan/builder" element={<ProgramBuilder />} />
+        <Route path="/plan/builder/:id" element={<ProgramDetail />} />
+        <Route path="/plan/builder/:programId/task/new" element={<ProgramTaskForm key={location.pathname + location.search} />} />
+        <Route path="/plan/builder/:programId/task/:taskId/edit" element={<ProgramTaskForm key={location.pathname} />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
       <BottomNav />

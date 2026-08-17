@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../lib/DataContext'
-import { Page, PageHeader, Card, IconBadge, ProgressBar } from '../components/ui'
+import { Page, PageHeader, Card, IconBadge, ProgressBar, PillRow } from '../components/ui'
 import Icon from '../components/Icon'
-import { CATEGORIES, CATEGORY_ICON } from '../lib/constants'
+import { CATEGORIES, CATEGORY_ICON, ALL_ZONES_ID, planTaskAppliesToZone, getPlanTaskZoneIds } from '../lib/constants'
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -12,8 +12,13 @@ const MONTH_NAMES = [
 
 export default function Plan() {
   const navigate = useNavigate()
-  const { planTasks, ensureYearPlan, resetYearPlan, addPlanTask, updatePlanTask, deletePlanTask } = useData()
+  const [searchParams] = useSearchParams()
+  const { zones, planTasks, ensureYearPlan, resetYearPlan, addPlanTask, updatePlanTask, deletePlanTask } = useData()
   const [year, setYear] = useState(new Date().getFullYear())
+  const [zoneFilter, setZoneFilter] = useState(() => {
+    const zoneId = searchParams.get('zone')
+    return zones.find((z) => z.id === zoneId)?.name ?? 'All'
+  })
   const [addingMonth, setAddingMonth] = useState(null)
   const [newCategory, setNewCategory] = useState('Other')
   const [newDescription, setNewDescription] = useState('')
@@ -22,16 +27,22 @@ export default function Plan() {
     ensureYearPlan(year)
   }, [ensureYearPlan, year])
 
+  const zoneOptions = useMemo(() => ['All', ...zones.map((z) => z.name)], [zones])
+  const filterZone = zones.find((z) => z.name === zoneFilter)
+
+  const yearTasks = useMemo(() => {
+    return planTasks
+      .filter((t) => t.year === year)
+      .filter((t) => zoneFilter === 'All' || (filterZone && planTaskAppliesToZone(t, filterZone.id)))
+  }, [planTasks, year, zoneFilter, filterZone])
+
   const tasksByMonth = useMemo(() => {
     const map = {}
     for (let m = 1; m <= 12; m++) map[m] = []
-    planTasks
-      .filter((t) => t.year === year)
-      .forEach((t) => map[t.month]?.push(t))
+    yearTasks.forEach((t) => map[t.month]?.push(t))
     return map
-  }, [planTasks, year])
+  }, [yearTasks])
 
-  const yearTasks = planTasks.filter((t) => t.year === year)
   const doneCount = yearTasks.filter((t) => t.completed).length
   const planPct = yearTasks.length ? Math.round((doneCount / yearTasks.length) * 100) : 0
 
@@ -50,7 +61,13 @@ export default function Plan() {
   function submitAdd(e, month) {
     e.preventDefault()
     if (!newDescription.trim()) return
-    addPlanTask({ year, month, category: newCategory, description: newDescription.trim() })
+    addPlanTask({
+      year,
+      month,
+      category: newCategory,
+      description: newDescription.trim(),
+      zoneIds: filterZone ? [filterZone.id] : [ALL_ZONES_ID],
+    })
     setAddingMonth(null)
   }
 
@@ -63,6 +80,23 @@ export default function Plan() {
   return (
     <Page>
       <PageHeader title="Seasonal Plan" backTo="/" />
+
+      <Link to="/plan/builder" className="link-row">
+        <Card>
+          <div className="list-row">
+            <IconBadge icon="list" color="var(--accent-2)" />
+            <div className="list-row__body">
+              <div className="list-row__title">Program Builder</div>
+              <div className="list-row__subtitle">Draft tasks, then commit them to this plan</div>
+            </div>
+            <Icon name="chevron-right" size={18} style={{ color: 'var(--text-faint)' }} />
+          </div>
+        </Card>
+      </Link>
+
+      <div style={{ height: 14 }} />
+      <PillRow options={zoneOptions} value={zoneFilter} onChange={setZoneFilter} />
+      <div style={{ height: 14 }} />
 
       <Card>
         <div style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -133,6 +167,10 @@ export default function Plan() {
             <Card>
               {tasks.map((task) => {
                 const meta = CATEGORY_ICON[task.category] || CATEGORY_ICON.Other
+                const taskZoneIds = getPlanTaskZoneIds(task)
+                const taskZoneLabel = taskZoneIds.includes(ALL_ZONES_ID)
+                  ? 'Whole Lawn'
+                  : taskZoneIds.map((id) => zones.find((z) => z.id === id)?.name || 'Deleted zone').join(', ')
                 return (
                   <div className="list-row" key={task.id}>
                     <button
@@ -166,7 +204,10 @@ export default function Plan() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
                         <IconBadge icon={meta.icon} color={meta.color} size={18} iconSize={11} />
-                        <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{task.category}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+                          {task.category}
+                          {zoneFilter === 'All' && ` · ${taskZoneLabel}`}
+                        </span>
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>

@@ -114,6 +114,19 @@ export default function ZoneDetail() {
         </CardBody>
       </Card>
 
+      <Link to={`/plan?zone=${zone.id}`} className="link-row">
+        <Card>
+          <div className="list-row">
+            <IconBadge icon="calendar" color="var(--accent-2)" />
+            <div className="list-row__body">
+              <div className="list-row__title">Seasonal Plan</div>
+              <div className="list-row__subtitle">View and manage planned tasks for this yard</div>
+            </div>
+            <Icon name="chevron-right" size={18} style={{ color: 'var(--text-faint)' }} />
+          </div>
+        </Card>
+      </Link>
+
       {lastBentgrass && (
         <Card>
           <CardBody>

@@ -59,6 +59,17 @@ export function zoneLabelForApp(app, zones) {
   return names.join(', ') || 'Deleted zone'
 }
 
+// Plan tasks predate zoneIds - treat any task missing it as Whole Lawn so
+// existing tasks don't vanish from every zone-specific view.
+export function getPlanTaskZoneIds(task) {
+  return Array.isArray(task.zoneIds) && task.zoneIds.length > 0 ? task.zoneIds : [ALL_ZONES_ID]
+}
+
+export function planTaskAppliesToZone(task, zoneId) {
+  const ids = getPlanTaskZoneIds(task)
+  return ids.includes(zoneId) || ids.includes(ALL_ZONES_ID)
+}
+
 export const CATEGORY_ICON = {
   Mow: { icon: 'scissors', color: '#7FFF3D' },
   Fertilizer: { icon: 'flask', color: '#D4E157' },

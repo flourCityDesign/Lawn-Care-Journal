@@ -10,6 +10,7 @@ import Zones from './screens/Zones'
 import ZoneForm from './screens/ZoneForm'
 import ZoneDetail from './screens/ZoneDetail'
 import Plan from './screens/Plan'
+import ProgramBuilder from './screens/ProgramBuilder'
 import Settings from './screens/Settings'
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/yards/:id" element={<ZoneDetail />} />
         <Route path="/yards/:id/edit" element={<ZoneForm />} />
         <Route path="/plan" element={<Plan />} />
+        <Route path="/plan/builder" element={<ProgramBuilder />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
       <BottomNav />

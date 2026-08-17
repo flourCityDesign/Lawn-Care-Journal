@@ -97,7 +97,16 @@ export function DataProvider({ children }) {
     setPlanTasks((prev) => [...prev.filter((t) => t.year !== year), ...buildDefaultPlanTasks(year)])
   }, [])
   const addPlanTask = useCallback((task) => {
-    const record = { id: makeId(), year: new Date().getFullYear(), month: 1, category: 'Other', description: '', completed: false, ...task }
+    const record = {
+      id: makeId(),
+      year: new Date().getFullYear(),
+      month: 1,
+      category: 'Other',
+      description: '',
+      completed: false,
+      zoneIds: [ALL_ZONES_ID],
+      ...task,
+    }
     setPlanTasks((prev) => [...prev, record])
     return record
   }, [])

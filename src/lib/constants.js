@@ -35,6 +35,19 @@ export function filterGroupForCategory(category) {
 // task is never given an exact date, just "sometime early/mid/late April".
 export const TASK_TIMING_OPTIONS = ['Early', 'Mid', 'Late']
 
+// Common cool- and warm-season types. Lawns are often a blend, so zone
+// forms let users pick several of these plus free text for anything else.
+export const GRASS_TYPES = [
+  'Kentucky Bluegrass',
+  'Tall Fescue',
+  'Fine Fescue',
+  'Perennial Ryegrass',
+  'Bermuda',
+  'Zoysia',
+  'St. Augustine',
+  'Centipede',
+]
+
 export const ALL_ZONES_ID = 'all'
 export const ALL_ZONES_LABEL = 'Whole Lawn (All Zones)'
 
